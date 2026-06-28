@@ -16,6 +16,79 @@ Prompt impact: [what to write into the prompt]
 
 Expose only the decisions that materially change scope, cost, safety, architecture, or output quality.
 
+## Intent-To-Task Conversion
+
+When the user's intent is vague or fragmented, turn it into a task brief by identifying:
+
+- `Outcome`: the concrete thing to produce or decide.
+- `Operator`: who or what should execute it, such as Codex, another agent, a human team, or a specific model.
+- `Inputs`: known materials, links, files, constraints, examples, and preferences.
+- `Unknowns`: missing information separated into safe assumptions and blockers.
+- `Boundaries`: what is in scope, out of scope, forbidden, or deferred.
+- `Verification`: how the user or next agent can tell the work is done.
+
+Prefer action verbs over abstract intentions. For example, rewrite "make this better" into "revise the prompt so another agent can implement X while preserving Y and verifying Z".
+
+## Direct Execution Vs Prompt Output
+
+Use this distinction aggressively:
+
+- If the user asks "help me build/fix/write/analyze", silently refine and perform the task.
+- If the user asks "optimize this prompt/rewrite requirements/self-grill/deepen", output the refined prompt or task brief.
+- If the user provides a prompt and asks "can this be better?", output a refined prompt plus brief notes.
+- If the user asks for both, provide the refined prompt first, then any requested execution plan or next step.
+
+Failure mode to avoid: answering a direct work request with only a meta-prompt.
+
+## Detail Expansion
+
+Add detail only when it improves execution. Useful detail includes:
+
+- specific deliverable shape
+- relevant context the next agent otherwise lacks
+- hard constraints and non-goals
+- acceptance criteria
+- validation steps
+- source requirements
+- safety and permission boundaries
+- tradeoffs and recommended defaults
+- placeholders for unknown inputs
+
+Avoid detail that merely restates the same idea, adds invented features, or forces the user to decide low-impact preferences.
+
+## Missing Information
+
+Classify missing information before asking:
+
+```text
+Safe assumption:
+- Missing item:
+- Assumption:
+- Why safe:
+- Where to label it:
+
+Blocker:
+- Missing item:
+- Why it blocks:
+- Recommended question:
+- Recommended default if the user asks you to proceed:
+```
+
+Common safe assumptions:
+
+- preserve the user's original language
+- keep output copy-ready
+- avoid hidden chain-of-thought
+- ask only blockers
+- use placeholders for unknown file paths, product names, dates, or audiences
+
+Common blockers:
+
+- no source material is provided for a rewrite
+- destructive local action is requested without target confirmation
+- high-stakes recommendation lacks the domain facts needed for a responsible answer
+- multiple mutually exclusive deliverables are requested and cannot be phased
+
 ## Current Information
 
 When the prompt depends on latest news, prices, schedules, laws, versions, product specs, model capabilities, APIs, company facts, or other unstable facts, require:
@@ -55,13 +128,13 @@ For apps, agents, MCP/tooling systems, plugins, SaaS, dashboards, data platforms
 When requirements conflict, do not silently choose one side. Resolve with a default, mode, phase, switch, or limitation.
 
 ```text
-潜在冲突：[A 要求] 与 [B 要求] 存在冲突，因为 [原因]。
-推荐默认：采用 [策略]，因为 [理由]。
-写入 prompt：
-- 默认行为：[...]
-- 可选模式/阶段：[...]
-- 例外条件：[...]
-- 不能承诺：[...]
+????:[A ??] ? [B ??] ????,?? [??]?
+????:?? [??],?? [??]?
+?? prompt:
+- ????:[...]
+- ????/??:[...]
+- ????:[...]
+- ????:[...]
 ```
 
 Common conflicts:
