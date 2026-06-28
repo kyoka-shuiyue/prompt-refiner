@@ -1,0 +1,4 @@
+interface:
+  display_name: "Prompt Refiner"
+  short_description: "Self-grill a vague request, then return one strong, copy-pasteable prompt."
+  default_prompt: "Use $prompt-refiner to pressure-test and sharpen this prompt: <paste your draft or rough idea>."
