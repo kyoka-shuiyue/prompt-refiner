@@ -5,15 +5,41 @@ description: "Self-grilling prompt refiner. Use to refine/rewrite/polish/optimiz
 
 # Prompt Refiner
 
-Turn rough intent into a reusable, executable prompt.
+Turn rough intent into a reusable, executable prompt or task brief.
+
+The root purpose is not cosmetic word polishing. The skill reduces ambiguity so AI systems do not guess: it turns vague, fragmented, conflicting, or under-specified intent into a clear unit of work.
 
 This skill is prompt-focused `grill-me`: self-interview the request, answer the questions with recommended defaults, resolve dependent decisions, then produce the strongest prompt. Do not start a live back-and-forth interview unless the user explicitly asks for interactive grilling.
 
 If the user asks you to perform the underlying task, use this workflow silently to shape the work, then do the task. Output a refined prompt only when prompt refinement is the task.
 
+## Operating Principle
+
+Before acting or outputting, internally answer:
+
+- What does the user actually want to complete?
+- What does success look like?
+- Which constraints must be preserved exactly?
+- Which missing information can be safely assumed?
+- Which missing information is blocking and must be asked?
+- Would another agent be able to execute the resulting prompt without hidden context?
+
+The core value is lowering ambiguity and converting an idea into an executable task.
+
 ## Core Workflow
 
-### 1. Self-Grill First
+### 1. Classify The Request
+
+Decide whether the user wants:
+
+- `direct execution`: they want Codex to do the task. Refine silently, then execute.
+- `prompt output`: they explicitly ask to optimize, rewrite, polish, deepen, stress-test, compare, or produce a prompt/task brief.
+- `mixed request`: they want both a refined prompt and some direct help. Provide the prompt first, then the requested help if scope is clear.
+- `exploration`: they are brainstorming and may benefit from a structured prompt plus concise options.
+
+Do not turn every request into meta-prompting. When in doubt, preserve the user's action orientation.
+
+### 2. Self-Grill First
 
 Before output, internally ask and answer the important ambiguity questions.
 
@@ -30,6 +56,7 @@ Cover:
 - current-information or source requirements
 - security, privacy, permissions, and destructive-action boundaries
 - conflicts, tradeoffs, risks, and failure modes
+- whether the refined prompt is reusable by another agent
 
 Question budget:
 
@@ -47,7 +74,7 @@ For each meaningful ambiguity, decide:
 
 Do not expose hidden chain-of-thought. If showing the self-grill, show a concise decision summary only.
 
-### 2. Resolve Or Ask
+### 3. Resolve Or Ask
 
 Classify unresolved items:
 
@@ -60,7 +87,7 @@ Ask at most one round of `1-3` questions, and only for blocking choices. Include
 
 Prefer a good default over making the user decide everything.
 
-### 3. Produce The Prompt
+### 4. Produce The Prompt
 
 Default output is one copy-ready prompt, in the user's language, with no extra commentary.
 
@@ -78,7 +105,22 @@ Use this compact skeleton when helpful:
 质量标准/验收标准：[如何判断好坏]
 ```
 
-### 4. Stress-Test The Draft
+For task briefs that another agent should execute, prefer this expanded skeleton:
+
+```text
+角色：[执行者身份或能力边界]
+任务：[要完成的具体工作]
+背景：[用户给出的上下文、已有材料、目标场景]
+成功标准：[可判断的结果]
+范围：[必须包含 / 明确不包含]
+约束：[工具、平台、文件、权限、安全、风格、时间、信息来源]
+执行步骤：[推荐顺序；只写必要步骤]
+缺失信息处理：[安全假设、占位符、必须追问的问题]
+输出格式：[最终交付物结构]
+验收与验证：[测试、检查、引用来源、质量标准]
+```
+
+### 5. Stress-Test The Draft
 
 Before final output, attack the draft once:
 
@@ -86,18 +128,21 @@ Before final output, attack the draft once:
 - Are concrete user constraints preserved instead of generalized?
 - Did you invent major background, features, constraints, or success criteria?
 - Are conflicts, safety boundaries, source requirements, and verification visible?
+- Does it distinguish hard requirements from preferences?
+- Does it avoid unnecessary live questioning?
 - If the user wanted direct execution, are you accidentally returning a prompt instead?
 
 Revise only the parts that materially improve executability or safety.
 
 ## Output Modes
 
-- `prompt only`: default for simple and normal requests.
-- `prompt + brief notes`: use when assumptions or conflicts need a short explanation.
+- `prompt only`: default for simple and normal prompt-refinement requests.
+- `prompt + brief notes`: use when assumptions, defaults, or conflicts need a short explanation.
 - `prompt + self-grill summary`: use when the user asks for 自问自答, 追问, 盘问, 深挖, grill, or stress-test.
 - `prompt + controversial choices`: use for large coding/product/agent/tooling projects.
 - `question first`: use only when blocked.
 - `candidate evaluation`: use when comparing multiple prompts.
+- `silent refinement + execution`: use when the user asks Codex to directly do the underlying task.
 
 For large coding, product, agent, MCP, plugin, data platform, SaaS, or desktop-tool prompts, output:
 
@@ -107,6 +152,17 @@ For large coding, product, agent, MCP, plugin, data platform, SaaS, or desktop-t
 
 Large engineering prompts should normally cover role, goal, users, workflows, modules, stack, data boundaries, permissions, safety, delivery scope, acceptance criteria, and verification.
 
+## Detail Dial
+
+Choose detail level by task risk and ambiguity:
+
+- `light`: small wording cleanups, messages, short asks. Keep the prompt compact and do not add process ceremony.
+- `standard`: ordinary tasks, coding requests, analysis asks. Include goal, constraints, output format, assumptions, and acceptance criteria.
+- `deep`: ambiguous, multi-step, high-impact, or explicit "更详细/深挖/盘问" requests. Include self-grill summary, scope boundaries, dependencies, risks, and verification.
+- `operational`: prompts intended for another agent to execute in a repo or tool environment. Include files, commands, permissions, non-goals, tests, and handoff notes where applicable.
+
+Do not add detail that only sounds sophisticated. Add detail that prevents wrong execution.
+
 ## Special Handling
 
 - Current or unstable facts: require fresh search or official/primary-source verification.
@@ -115,10 +171,11 @@ Large engineering prompts should normally cover role, goal, users, workflows, mo
 - Known-product inspiration: use as functional/style reference only; avoid copying protected assets or exact UI.
 - Technical conflicts: preserve both intents with modes, switches, phases, defaults, or explicit limitations.
 - Missing details: use placeholders or labeled assumptions; do not invent major background, features, or constraints.
+- Direct work requests: silently refine the task, then do it. Mention assumptions only when they affect the outcome.
 
 ## Reference Routing
 
-Read `references/patterns.md` only when the request involves current information, high-stakes judgment, complex product/app/agent/developer-tool design, hidden-thinking wording, multiple prompt candidates, or technical conflicts.
+Read `references/patterns.md` only when the request involves current information, high-stakes judgment, complex product/app/agent/developer-tool design, hidden-thinking wording, multiple prompt candidates, technical conflicts, explicit deepening, or "more detailed" refinement.
 
 Do not load examples by default. Prefer generating task-specific examples from the current request instead of relying on stored example files.
 
@@ -135,6 +192,7 @@ Before answering, verify:
 - result is reusable and executable
 - visible questions are limited to true blockers
 - complex engineering prompts include verification and controversy handling
+- direct execution requests were not mistakenly converted into prompt-output requests
 
 ## Rules
 
@@ -144,3 +202,4 @@ Before answering, verify:
 4. Keep visible self-grill concise and decision-oriented.
 5. When the user wants direct execution, use the self-grill silently and do the task.
 6. Output the refined prompt, not the underlying task answer, when refinement is the task.
+7. Optimize for executable clarity, not verbosity.
