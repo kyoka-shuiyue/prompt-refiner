@@ -12,9 +12,23 @@ Recommended default: [best answer]
 Evidence: [what in the user request supports it]
 Risk if wrong: [what changes if false]
 Prompt impact: [what to write into the prompt]
+Controversy level: [low | medium | high]
 ```
 
 Expose only the decisions that materially change scope, cost, safety, architecture, or output quality.
+
+## Deep Self-Grill Funnel
+
+For non-trivial prompt refinement or execution prep, internally ask `20-50` self-grill questions. The goal is not to show every question; the goal is to pressure-test the prompt until routine decisions have been absorbed and only meaningful controversies remain. The visible summary should normally include `8-15` distilled decisions for substantial tasks.
+
+Sort the answers into this funnel:
+
+- `default into prompt`: low-controversy details where a strong default exists. Choose for the user and write the decision into the prompt or plan.
+- `briefly note`: medium-impact assumptions that may matter later but do not require a user decision now.
+- `ask user`: high-impact controversies that change scope, architecture, style, source requirements, permissions, cost, safety posture, or acceptance criteria.
+- `block`: missing information without which no useful prompt or plan can be produced.
+
+When too many questions qualify for `ask user`, merge them into at most `1-3` sharp questions. Each question should include the recommended answer and the practical consequence of choosing it.
 
 ## Current Information
 
@@ -49,6 +63,21 @@ For apps, agents, MCP/tooling systems, plugins, SaaS, dashboards, data platforms
 - delivery scope and non-goals
 - acceptance criteria and verification
 - known risks and controversial choices
+
+## Execution Track Plan Gate
+
+When `prompt-refiner` is being used before direct task execution, do not jump straight to implementation for substantial work. First run the deep self-grill funnel, expose a concise decision summary, then ask up to three high-impact questions if the answer changes scope, architecture, style, data/source requirements, permissions, cost, or acceptance criteria.
+
+After the question round is resolved, create `plan.md` before editing files or running a long tool chain. The plan should include:
+
+- intent and success criteria
+- defaults selected for the user, assumptions, and user-confirmed choices
+- scope and non-goals
+- implementation steps
+- risks and rollback/safety notes
+- verification steps
+
+Then execute from the plan. Skip the file only for tiny one-step work, read-only answers, or explicit no-file instructions.
 
 ## Technical Conflict Handling
 

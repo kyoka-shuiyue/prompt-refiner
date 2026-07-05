@@ -2,7 +2,7 @@
 
 `prompt-refiner` is a Codex skill for turning rough user intent into clear, executable prompts.
 
-It is intentionally prompt-focused `grill-me`: the agent internally self-interviews the request, answers ambiguity with recommended defaults, resolves conflicts, and outputs the strongest usable prompt. It should not turn every task into meta-prompting. When the user wants direct execution, the agent should use the self-grill silently and do the task.
+It is intentionally prompt-focused `grill-me`: the agent internally self-interviews the request, answers ambiguity with recommended defaults, resolves conflicts, and outputs the strongest usable prompt. For non-trivial direct execution, it runs a deeper execution track first: distilled self-grill summary, only the highest-impact user questions, `plan.md`, then implementation.
 
 ## Install
 
@@ -37,9 +37,11 @@ evals/
 ## Design Goals
 
 - Trigger on prompt refinement, rewriting, polishing, stress-testing, comparison, and `grill-me` style prompt improvement.
-- Internally self-grill instead of starting a long live interview by default.
-- Prefer recommended defaults over pushing every decision back to the user.
-- Ask visible questions only for true blockers.
+- Internally self-grill deeply instead of starting a long live interview by default.
+- For non-trivial work, use about `20-50` internal questions and show about `8-15` distilled decision bullets.
+- Prefer recommended defaults over pushing every decision back to the user; write low-controversy choices into the prompt or plan.
+- Ask visible questions only for true blockers or distilled high-impact controversies.
+- For non-trivial direct execution, create `plan.md` before implementation unless the user forbids files.
 - Preserve concrete user constraints instead of generalizing them away.
 - Handle current information, high-stakes domains, hidden chain-of-thought requests, technical conflicts, and candidate prompt selection safely.
 - Keep the skill folder lean: no bundled example files unless they are necessary for execution.

@@ -43,3 +43,7 @@ The two completed forward-tests support the most important behavioral claims:
 - It handles hidden thinking and current-information conflicts as intended.
 
 The product-prompt forward-test still needs a fresh independent run when subagent usage is available again.
+
+## 2026-07-05 Update Note
+
+The skill has since been updated with a deeper execution track: non-trivial work should use `20-50` internal self-grill questions, expose about `8-15` distilled decisions, ask only high-impact controversies, create `plan.md`, then implement. Fresh forward-tests should be rerun for this newer behavior.
