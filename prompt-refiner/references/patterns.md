@@ -2,6 +2,37 @@
 
 Load this file only for prompt refinements that need extra handling beyond the core workflow.
 
+## Contents
+
+- Output overrides
+- Self-grill decision record and funnel
+- Current/high-stakes information
+- Complex product and execution planning
+- Conflicts, hidden thinking, and candidate selection
+
+## Output Overrides
+
+### Pure Prompt
+
+When the user says `纯prompt`, `只要prompt`, or asks for a copy-ready prompt without commentary:
+
+- return exactly one prompt block
+- preserve the full task framework, constraints, acceptance criteria, and verification
+- fold safe defaults into the prompt instead of explaining them outside it
+- preserve the supplied rules/template structure when one exists
+- omit self-grill summaries, recommendation scaffolding, and controversy lists unless a missing input makes the prompt unusable
+
+### No Follow-Up
+
+When the user says `不要问`, `直接继续`, or requests silent self-grilling:
+
+- answer low- and medium-impact ambiguities with recommended defaults
+- record consequential assumptions in the prompt or `plan.md`
+- continue to the requested deliverable
+- stop only for missing permission, dangerous scope expansion, secrets, or truly blocking information
+
+No-follow-up changes how ambiguity is resolved; it does not authorize new external side effects or unsafe assumptions.
+
 ## Self-Grill Decision Record
 
 For complex prompts, internally reduce ambiguity into this record:

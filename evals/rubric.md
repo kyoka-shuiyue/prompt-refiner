@@ -1,10 +1,13 @@
 # prompt-refiner Eval Rubric
 
-Score each case out of 45 raw points, then normalize to 40 points if comparing with older reports.
+[English](rubric.md) | [简体中文](rubric.zh-CN.md)
+
+Score each case out of 50 raw points, then normalize to 40 points if comparing with older reports.
 
 ## Dimensions
 
-- Trigger fit, 0-5: Uses `prompt-refiner` only when the request is about prompt refinement or when it is explicitly invoked.
+- Trigger fit, 0-5: Uses `prompt-refiner` for prompt refinement, explicit invocation, or genuinely vague/non-trivial work that benefits from decision-first routing.
+- Routing accuracy, 0-5: Selects prompt, execution, answer, or ambiguous handling correctly and honors explicit output overrides.
 - Ambiguity coverage, 0-5: Identifies missing context that changes the prompt or execution plan.
 - Deep self-grill discipline, 0-5: For non-trivial tasks, reflects a `20-50` question internal pressure test through a useful distilled summary.
 - Recommended defaults, 0-5: Chooses good low-controversy defaults instead of asking avoidable questions, and writes them into the prompt or plan.
@@ -27,6 +30,7 @@ Use the 40-point normalized score for the passing bar below.
 - Invents major background, features, constraints, or success criteria.
 - Drops concrete user constraints.
 - Produces commentary but no final usable prompt, direct answer, or execution plan.
+- Ignores `纯prompt` / `只要prompt` or continues asking routine questions after `不要问` / `直接继续`.
 
 ## Passing Bar
 

@@ -1,98 +1,63 @@
 ---
 name: prompt-refiner
-description: "Self-grilling prompt refiner. Use to refine/rewrite/polish/optimize/clarify/stress-test/compare prompts, AI tasks, requirements, product ideas, or coding requests; triggers: 完善/优化/整理/改写/润色/打磨/重写/自问自答/追问/盘问/深挖/grill-me. Internally self-interview deeply, default low-controversy choices into the prompt, expose only high-impact controversies, and create plan.md for non-trivial direct work."
+description: "Self-grilling prompt and task refiner. Use to refine/rewrite/polish/optimize/clarify/stress-test/compare prompts, AI tasks, requirements, product ideas, or coding requests; triggers: 完善/优化/整理/改写/润色/打磨/重写/自问自答/追问/盘问/深挖/grill-me. Also use as a decision-first router for vague or non-trivial direct work. Distinguish prompt-only from execution, preserve supplied structure, default low-risk choices, ask only high-impact questions, honor 纯prompt/不要追问 overrides, and create plan.md before non-trivial direct execution."
 ---
 
 # Prompt Refiner
 
-Turn rough intent into a reusable, executable prompt.
+Turn rough intent into either a reusable executable prompt or a decision-ready execution plan. Internally self-interview the request, absorb routine choices, surface only consequential controversies, and never expose hidden chain-of-thought.
 
-This skill is prompt-focused `grill-me`: self-interview the request deeply, answer low-controversy questions with recommended defaults, resolve dependent decisions, then produce the strongest prompt or execution plan. Do not start a live back-and-forth interview for trivia, but do ask a short question round when a high-impact choice would materially change the result.
+## Routing Contract
 
-If the user asks you to perform the underlying task, do not jump straight to implementation for non-trivial work. Use the execution track: visible self-grill summary, one short question round when needed, write `plan.md`, then start work. For tiny, reversible, operationally clear tasks, use the workflow silently and execute.
+Classify the request before producing anything:
+
+- **Prompt track**: the user asks for a prompt, rewrite, critique, comparison, reusable instruction package, or says `纯prompt`. Return the refined prompt; do not execute it unless explicitly asked.
+- **Execution track**: the user asks Codex to perform the underlying task, especially coding, file edits, local tools, UI, research, MCP/plugin/agent work, data work, or another multi-step deliverable.
+- **Answer track**: the user asks a read-only factual or explanatory question. Apply the discipline silently and answer; do not create a prompt or `plan.md` merely to satisfy the skill.
+- **Ambiguous track**: infer from the requested deliverable. Prefer execution only when the user clearly asks for an artifact or state change; otherwise return a prompt or concise clarification.
+
+Explicit user overrides take precedence:
+
+- `纯prompt` / `只要prompt`: return one copy-ready prompt block with no decision scaffolding or meta commentary. Preserve the full implementation framework.
+- `不要问` / `直接继续` / `自问自答后执行`: self-grill silently, choose safe defaults, record them in the prompt or plan, and continue. Stop only for missing authority, safety boundaries, secrets, or information without which useful work is impossible.
+- When editing a supplied rules block, template, or structured prompt, preserve its structure and replace or extend it in place unless the user asks for restructuring.
 
 ## Core Workflow
 
-### 1. Self-Grill First
+### 1. Self-Grill
 
-Before output, internally ask and answer the important ambiguity questions.
+Internally test intent, success criteria, audience, context, deliverable, depth, scope, non-goals, tools, platform/model/stack, source freshness, security, permissions, destructive actions, missing inputs, conflicts, failure modes, verification, and rollback.
 
-Cover:
+Question budget is a pressure-test target, not output:
 
-- task vs non-task
-- desired outcome and acceptance criteria
-- audience and use context
-- output format and depth
-- tool, platform, model, stack, file, or environment constraints
-- required scope and excluded scope
-- hard constraints vs preferences
-- missing inputs and safe placeholders
-- current-information or source requirements
-- security, privacy, permissions, and destructive-action boundaries
-- conflicts, tradeoffs, risks, and failure modes
-
-Internal question budget:
-
-- tiny or purely mechanical request: `4-8`
+- tiny mechanical request: `4-8`
 - simple prompt rewrite: `10-20`
-- normal prompt/task refinement: `20-35`
-- complex coding, product, agent, MCP, plugin, data, UI, research, or execution request: `35-50`
-- explicit deep grilling, vague high-stakes work, or multi-system design: `50+` only if the extra questions keep changing the prompt or plan
+- normal refinement: `20-35`
+- complex product, coding, agent, MCP, plugin, data, UI, research, or execution task: `35-50`
+- exceed `50` only when further questions still change the result
 
-For non-trivial work, default to at least `20` internal self-grill questions before deciding that the request is clear. Do not expose the full question list; expose a distilled decision summary that is substantial enough to be useful.
-
-For each meaningful ambiguity, decide:
-
-- recommended default
-- evidence from the user request
-- risk if wrong
-- prompt impact
-- controversy level: low, medium, or high
-
-Do not expose hidden chain-of-thought. If showing the self-grill for non-trivial work, normally show `8-15` distilled decision bullets, not the full private reasoning trace.
+For each meaningful ambiguity, determine the recommended default, evidence from the request, downside if wrong, effect on the prompt/plan, and controversy level. For non-trivial work, expose only `8-15` distilled decisions when a visible summary is required; do not reveal the private question tree.
 
 ### 2. Resolve Or Ask
 
-Classify unresolved items:
+Use this filter:
 
-- `safe assumption`: use silently.
-- `recommended default`: choose it for the user, write it into the prompt or plan, and label it as an assumption only when helpful.
-- `medium-impact ambiguity`: choose the strongest default when the user gave enough context; expose only if several defaults are genuinely plausible and consequential.
-- `high-impact controversy`: expose as a user question with your recommended answer.
-- `blocking question`: ask the user because no useful prompt can be produced without it.
+1. Obvious from context: apply silently.
+2. Unclear but low downside: choose the strongest default and write it into the prompt or plan.
+3. Changes scope, architecture, style direction, cost, permissions, data/source requirements, safety, or acceptance criteria: ask.
+4. No useful work is possible without it: block briefly.
 
-Ask at most one round of `1-3` questions for blocking choices or high-impact controversies. Include your recommended answer for each question.
+Ask at most one round of `1-3` high-signal questions and include the recommended answer plus practical consequence. Merge overlapping questions. Do not ask routine preference questions that can be defaulted.
 
-Prefer a good default over making the user decide everything. The user's time should be spent only on leverage points; the agent should absorb routine decisions.
+### 3. Produce And Stress-Test
 
-Use this decision filter:
+Before delivery, verify that another agent can execute without hidden context; user constraints and original wording are preserved where important; assumptions are labeled; current facts require verification; conflicts and safety boundaries are visible; acceptance criteria are testable; and no major features or background were invented.
 
-1. If the answer is obvious from the request, silently apply it.
-2. If the answer is not obvious but the downside is small, choose the recommended default and write it into the prompt or plan.
-3. If the answer changes architecture, scope, cost, permissions, data/source requirements, style direction, acceptance criteria, or safety posture, ask the user.
-4. If several questions are worth asking, collapse them into the smallest set of `1-3` high-signal questions.
+Revise only where executability, fidelity, or safety materially improves.
 
-### 3. Choose The Track
+## Prompt Track
 
-Use `prompt track` when the user asks for a prompt, rewrite, critique, comparison, or reusable instruction package.
-
-Use `execution track` when the user expects you to perform the underlying task, especially coding, file edits, local tools, web/UI work, research, MCP/plugin/agent work, data work, or any multi-step deliverable.
-
-For execution track:
-
-1. Run a deep internal self-grill first: normally `20-50` questions for non-trivial work. Show a substantial but distilled `自问自答压测摘要`, normally `8-15` decision bullets, with only the important decisions, recommended defaults, and prompt/plan impact. This is a visible decision record, not hidden chain-of-thought.
-2. Ask `1-3` `争议/待确认问题` before implementation when answers could materially change scope, architecture, style, data/source requirements, permissions, cost, or acceptance criteria.
-3. Write the low-controversy defaults into the prompt or `plan.md` so future agents inherit the decisions instead of re-asking.
-4. After the question round is resolved, write a `plan.md` file before editing files or running a long tool chain. In repo threads, place it at the relevant repo/task root unless local conventions say otherwise. In projectless threads, place it under `work/plan.md` unless the user requested a user-facing deliverable.
-5. Start executing the plan after `plan.md` exists.
-
-Skip `plan.md` only for tiny one-step tasks, read-only answers, or when the user explicitly says not to create files.
-
-### 4. Produce The Prompt
-
-Default output is one copy-ready prompt, in the user's language, with no extra commentary.
-
-Use this compact skeleton when helpful:
+Default to one copy-ready prompt in the user's language. Use this skeleton only when it helps:
 
 ```text
 任务：[要完成什么]
@@ -101,84 +66,55 @@ Use this compact skeleton when helpful:
 要求：
 1. ...
 2. ...
-约束：[范围、工具、数据、安全、风格、时间等]
+约束：[范围、工具、数据、安全、风格、时间]
 输出格式：[答案结构或交付物]
-质量标准/验收标准：[如何判断好坏]
+验收标准：[如何判断完成]
 ```
 
-### 5. Stress-Test The Draft
+For large coding, product, agent, MCP, plugin, data platform, SaaS, or desktop-tool prompts, normally return:
 
-Before final output, attack the draft once:
-
-- Would another agent understand and execute it without hidden context?
-- Are concrete user constraints preserved instead of generalized?
-- Did you invent major background, features, constraints, or success criteria?
-- Are conflicts, safety boundaries, source requirements, and verification visible?
-- If the user wanted direct execution, did you complete the execution track instead of only returning a prompt?
-
-Revise only the parts that materially improve executability or safety.
-
-## Output Modes
-
-- `prompt only`: default for simple and normal requests.
-- `prompt + brief notes`: use when assumptions or conflicts need a short explanation.
-- `prompt + self-grill summary`: use when the user asks for 自问自答, 追问, 盘问, 深挖, grill, or stress-test.
-- `prompt + controversial choices`: use for large coding/product/agent/tooling projects.
-- `execution prep`: use for non-trivial direct-execution requests; show self-grill summary, ask high-impact questions, then create `plan.md` after answers.
-- `plan.md + execution`: use after the question round is resolved; save the plan before implementing.
-- `question first`: use only when blocked.
-- `candidate evaluation`: use when comparing multiple prompts.
-
-For large coding, product, agent, MCP, plugin, data platform, SaaS, or desktop-tool prompts, output:
-
-1. `自问自答压测摘要`: key questions, recommended answers, and prompt impact.
+1. `自问自答压测摘要`: `8-15` distilled decisions, recommended defaults, and prompt impact.
 2. `完善后的 Prompt`: the full copy-ready prompt.
-3. `争议选择`: high-impact choices with recommended defaults.
+3. `争议选择`: only unresolved high-impact choices, each with a recommended default.
 
-Large engineering prompts should normally cover role, goal, users, workflows, modules, stack, data boundaries, permissions, safety, delivery scope, acceptance criteria, and verification.
+If the user requested `纯prompt`, omit sections 1 and 3 and fold resolved defaults into the prompt itself.
 
-For large engineering prompts, the visible `自问自答压测摘要` should be the distilled result of `20-50` internal questions, not merely a few shallow bullets. It should normally contain `8-15` meaningful decision bullets, enough to prove the request was stress-tested while still hiding private chain-of-thought.
+Large engineering prompts should cover role, goal, users, workflows, modules, stack, data/state boundaries, permissions, safety, delivery scope, non-goals, acceptance criteria, and verification. Do not execute the prompt unless the user also requests execution.
+
+## Execution Track
+
+For non-trivial direct work:
+
+1. Run the deep self-grill.
+2. Show a concise `自问自答压测摘要` of `8-15` decisions unless the user requested silent/no-scaffolding operation.
+3. Ask `1-3` high-impact questions only when the user has not disabled follow-ups and safe defaults would materially risk divergence.
+4. Write low-controversy defaults and confirmed choices to `plan.md`.
+5. Save `plan.md` before editing files or starting a long tool chain, then execute it.
+
+In repositories, place `plan.md` at the relevant task/repo root unless local conventions say otherwise. In projectless threads, use `work/plan.md`. Include goal, acceptance criteria, scope/non-goals, decisions, steps, risks, safety/rollback, and verification.
+
+Skip `plan.md` for tiny one-step operations, read-only answers, or explicit no-file instructions.
 
 ## Special Handling
 
-- Current or unstable facts: require fresh search or official/primary-source verification.
-- High-stakes domains: separate facts, assumptions, judgment, confidence, and risk.
-- Hidden thinking requests: ask for visible decision notes, audit trails, summaries, or evidence, not hidden chain-of-thought.
-- Known-product inspiration: use as functional/style reference only; avoid copying protected assets or exact UI.
-- Technical conflicts: preserve both intents with modes, switches, phases, defaults, or explicit limitations.
-- Missing details: use placeholders or labeled assumptions; do not invent major background, features, or constraints.
+- **Current or unstable facts**: require fresh search or official/primary-source verification, source dates, missing-data handling, and fact/inference separation.
+- **High-stakes domains**: separate facts, assumptions, judgment, confidence, risks, and invalidation conditions; do not imply professional certainty.
+- **Hidden thinking requests**: replace hidden chain-of-thought with concise decision notes, evidence, audit trails, tool timelines, or verification results.
+- **Known-product inspiration**: use functional or stylistic reference without copying protected assets or exact UI.
+- **Technical conflicts**: resolve with explicit defaults, modes, phases, switches, or limitations rather than silently dropping one side.
+- **Missing details**: use labeled assumptions or placeholders; do not invent major context, features, or constraints.
 
-## Reference Routing
-
-Read `references/patterns.md` only when the request involves current information, high-stakes judgment, complex product/app/agent/developer-tool design, hidden-thinking wording, multiple prompt candidates, or technical conflicts.
-
-Do not load examples by default. Prefer generating task-specific examples from the current request instead of relying on stored example files.
+Read [references/patterns.md](references/patterns.md) when the task involves current information, high-stakes judgment, complex product/agent/developer-tool design, direct execution preparation, hidden-thinking wording, prompt comparison, technical conflicts, `纯prompt`, or no-follow-up operation.
 
 ## Final Check
 
-Before answering, verify:
-
-- intent is preserved
-- meaningful ambiguities were self-grilled deeply enough; non-trivial tasks normally used `20-50` internal questions
-- low-controversy decisions were selected for the user and written into the prompt or plan
-- major assumptions are safe, labeled, or exposed
-- no invented major feature or context slipped in
-- output language matches the user
-- concrete constraints from the user are preserved
-- result is reusable and executable
-- visible questions are limited to true blockers or high-impact controversies
-- complex engineering prompts include verification and controversy handling
-
-## Rules
-
-1. Internally grill before output.
-2. For non-trivial requests, internally self-grill with `20-50` questions before treating the request as clear.
-3. Answer low-controversy questions with recommended defaults and write those defaults into the prompt or plan.
-4. Ask the user only for blocking decisions or distilled high-impact controversies before non-trivial execution.
-5. Keep visible self-grill concise and decision-oriented.
-6. When the user wants direct execution, use the execution track for non-trivial work and the silent workflow only for tiny, obvious tasks.
-7. Output the refined prompt, not the underlying task answer, when refinement is the task.
-8. For non-trivial local execution, create `plan.md` before implementation unless the user forbids files.
+- Correct track selected; prompt refinement did not accidentally execute the task.
+- Non-trivial work used a deep enough self-grill; visible notes are decisions, not hidden reasoning.
+- Low-risk defaults are written into the deliverable; visible questions are true leverage points.
+- Supplied structures and concrete constraints remain intact.
+- Output language and requested format match the user.
+- Current facts, high-stakes claims, permissions, and verification are handled explicitly.
+- Direct non-trivial execution has `plan.md` unless an allowed exception applies.
 
 <!-- SKILLOPT-SLEEP:LEARNED START -->
 ## Learned preferences & procedures

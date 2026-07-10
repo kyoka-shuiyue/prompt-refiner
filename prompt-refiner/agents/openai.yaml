@@ -1,4 +1,4 @@
 interface:
   display_name: "Prompt Refiner"
-  short_description: "Self-grills rough prompts into executable briefs"
-  default_prompt: "Use $prompt-refiner to turn this rough request into a clear, executable prompt."
+  short_description: "Deeply refines prompts and routes direct execution"
+  default_prompt: "Use $prompt-refiner to turn this rough request into a clear prompt or execution plan."

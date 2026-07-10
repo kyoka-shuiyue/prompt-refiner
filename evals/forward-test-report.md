@@ -1,5 +1,7 @@
 # Fresh Forward-Test Report
 
+[English](forward-test-report.md) | [简体中文](forward-test-report.zh-CN.md)
+
 Date: 2026-06-27
 
 ## Setup
@@ -47,3 +49,7 @@ The product-prompt forward-test still needs a fresh independent run when subagen
 ## 2026-07-05 Update Note
 
 The skill has since been updated with a deeper execution track: non-trivial work should use `20-50` internal self-grill questions, expose about `8-15` distilled decisions, ask only high-impact controversies, create `plan.md`, then implement. Fresh forward-tests should be rerun for this newer behavior.
+
+## 2026-07-10 Update Note
+
+The repository has since synchronized the newer four-track routing contract plus explicit `纯prompt` and `不要问` overrides. The eval corpus now includes these behaviors, but a fresh independent forward-test has not yet been run for this revision.
