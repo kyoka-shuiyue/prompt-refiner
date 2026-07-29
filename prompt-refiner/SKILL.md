@@ -1,127 +1,149 @@
 ---
 name: prompt-refiner
-description: "Self-grilling prompt and task refiner. Use to refine/rewrite/polish/optimize/clarify/stress-test/compare prompts, AI tasks, requirements, product ideas, or coding requests; triggers: 完善/优化/整理/改写/润色/打磨/重写/自问自答/追问/盘问/深挖/grill-me. Also use as a decision-first router for vague or non-trivial direct work. Distinguish prompt-only from execution, preserve supplied structure, default low-risk choices, ask only high-impact questions, honor 纯prompt/不要追问 overrides, and create plan.md before non-trivial direct execution."
+description: "Model-agnostic task-contract refiner. Use to refine, rewrite, clarify, stress-test, or compare prompts, AI tasks, requirements, product ideas, and coding requests; triggers include 完善/优化/整理/改写/润色/打磨/重写/自问自答/追问/盘问/深挖/grill-me. Also use as a decision-first router for vague or non-trivial direct work. Clarify the goal, success criteria, important boundaries, stop rules, and material questions without over-prescribing the execution path."
 ---
 
 # Prompt Refiner
 
-Turn rough intent into either a reusable executable prompt or a decision-ready execution plan. Internally self-interview the request, absorb routine choices, surface only consequential controversies, and never expose hidden chain-of-thought.
+Turn rough intent into a clear task contract or an execution-ready decision. Improve the destination and guardrails, not the amount of process text.
 
-## Routing Contract
+## Core Principle
 
-Classify the request before producing anything:
+Make five things clear to the degree the task requires:
 
-- **Prompt track**: the user asks for a prompt, rewrite, critique, comparison, reusable instruction package, or says `纯prompt`. Return the refined prompt; do not execute it unless explicitly asked.
-- **Execution track**: the user asks Codex to perform the underlying task, especially coding, file edits, local tools, UI, research, MCP/plugin/agent work, data work, or another multi-step deliverable.
-- **Answer track**: the user asks a read-only factual or explanatory question. Apply the discipline silently and answer; do not create a prompt or `plan.md` merely to satisfy the skill.
-- **Ambiguous track**: infer from the requested deliverable. Prefer execution only when the user clearly asks for an artifact or state change; otherwise return a prompt or concise clarification.
+1. **Goal**: the user-visible outcome.
+2. **Success criteria**: what must be true before the work is complete.
+3. **Important boundaries**: scope, permissions, safety, evidence, cost, compatibility, and facts that must be preserved.
+4. **Stop rules**: when to finish, retry, fall back, ask, abstain, or stop.
+5. **Material clarifications**: missing choices whose answers would change one of the first four fields.
 
-Explicit user overrides take precedence:
+Treat context, tools, output format, workflows, modules, data models, and implementation steps as supporting details. Add them only when they materially change the task contract or the user explicitly requests them. Do not expand a request merely to make it look complete.
 
-- `纯prompt` / `只要prompt`: return one copy-ready prompt block with no decision scaffolding or meta commentary. Preserve the full implementation framework.
-- `不要问` / `直接继续` / `自问自答后执行`: self-grill silently, choose safe defaults, record them in the prompt or plan, and continue. Stop only for missing authority, safety boundaries, secrets, or information without which useful work is impossible.
-- When editing a supplied rules block, template, or structured prompt, preserve its structure and replace or extend it in place unless the user asks for restructuring.
+## Route The Request
 
-## Core Workflow
+Classify the requested deliverable before producing it:
 
-### 1. Self-Grill
+- **Prompt track**: create, rewrite, critique, or compare a prompt or reusable instruction package. Return the refined prompt; do not execute it unless explicitly asked. Direct prose, document, data, or code transformations are execution requests, not prompt requests.
+- **Execution track**: perform the underlying task. Clarify the contract, then act within the confirmed authorization boundary.
+- **Answer track**: answer a read-only factual or explanatory question. Apply the contract check silently and answer directly.
+- **Ambiguous track**: infer the deliverable when low risk. If interpretations change the action level, scope, permissions, or acceptance criteria, inspect relevant evidence first when safe, then ask one bundled question only if material ambiguity remains.
 
-Internally test intent, success criteria, audience, context, deliverable, depth, scope, non-goals, tools, platform/model/stack, source freshness, security, permissions, destructive actions, missing inputs, conflicts, failure modes, verification, and rollback.
+State the selected track only when doing so prevents a likely misunderstanding, such as distinguishing discussion from file edits.
 
-Question budget is a pressure-test target, not output:
+Honor explicit overrides:
 
-- tiny mechanical request: `4-8`
-- simple prompt rewrite: `10-20`
-- normal refinement: `20-35`
-- complex product, coding, agent, MCP, plugin, data, UI, research, or execution task: `35-50`
-- exceed `50` only when further questions still change the result
+- `纯prompt` / `只要prompt`: return one copy-ready prompt without decision scaffolding.
+- `不要问` / `直接继续` / `自问自答后执行`: choose safe defaults and continue. Stop only for missing authority, dangerous scope expansion, secrets, or information without which useful work is impossible.
+- When editing a supplied rules block, template, or structured prompt, preserve its useful structure and patch genuine gaps unless restructuring is requested.
 
-For each meaningful ambiguity, determine the recommended default, evidence from the request, downside if wrong, effect on the prompt/plan, and controversy level. For non-trivial work, expose only `8-15` distilled decisions when a visible summary is required; do not reveal the private question tree.
+## Refine The Contract
+
+### 1. Pressure-Test Material Gaps
+
+Internally test the five contract fields. There is no question quota. Ask another internal question only when its answer could change the goal, completion bar, important boundaries, stop rules, or need for user clarification.
+
+For each meaningful ambiguity, determine:
+
+- the recommended default;
+- evidence from the request;
+- the consequence if the default is wrong;
+- which contract field changes;
+- whether the choice is low, medium, or high impact.
+
+Stop when further questions would add only wording, examples, decorative structure, or implementation preferences that a capable model can choose safely.
 
 ### 2. Resolve Or Ask
 
 Use this filter:
 
 1. Obvious from context: apply silently.
-2. Unclear but low downside: choose the strongest default and write it into the prompt or plan.
-3. Changes scope, architecture, style direction, cost, permissions, data/source requirements, safety, or acceptance criteria: ask.
-4. No useful work is possible without it: block briefly.
+2. Unclear but low downside: choose a sensible default and record it only when useful.
+3. Changes scope, permissions, safety, cost, evidence, or acceptance criteria: ask.
+4. Makes useful work impossible: block briefly and name the smallest missing input.
 
-Ask at most one round of `1-3` high-signal questions and include the recommended answer plus practical consequence. Merge overlapping questions. Do not ask routine preference questions that can be defaulted.
+Ask at most one round of `1-3` high-signal questions. Merge overlaps and include a recommended default with its practical consequence. Do not expose a fixed-length self-grill; show only decisions the user needs to understand or confirm.
 
-### 3. Produce And Stress-Test
+### 3. Produce The Smallest Sufficient Contract
 
-Before delivery, verify that another agent can execute without hidden context; user constraints and original wording are preserved where important; assumptions are labeled; current facts require verification; conflicts and safety boundaries are visible; acceptance criteria are testable; and no major features or background were invented.
+Describe the outcome before the path. Preserve explicit user values and constraints. Use absolute words such as `always`, `never`, `must`, and `only` only for genuine invariants.
 
-Revise only where executability, fidelity, or safety materially improves.
+Add process detail only for safety, compatibility, reproducibility, an external contract, or an explicitly requested method. Do not invent features, modules, roles, background, or acceptance criteria.
 
-## Prompt Track
+For shorter outputs, preserve required facts, decisions, caveats, and next actions first. Remove introductions, repetition, generic reassurance, optional examples, and background before material content.
 
-Default to one copy-ready prompt in the user's language. Use this skeleton only when it helps:
+For editing or rewriting, preserve the supplied artifact, facts, structure, genre, and approximate length before improving clarity or flow. Ask about length only when the source is missing or explicit preservation requirements conflict materially.
+
+### 4. Stress-Test Before Delivery
+
+Check that another capable model or agent could complete the task without hidden context while retaining freedom to choose an efficient route. Verify that:
+
+- the completion bar is observable;
+- permissions and side-effect boundaries are clear;
+- unstable facts require fresh evidence when appropriate;
+- stop, fallback, and missing-evidence behavior are defined where needed;
+- supplied structure and wording are preserved when material;
+- no rule contradicts another;
+- no detail remains solely because a template had a slot for it.
+
+Before each substantial phase and the final answer, check for drift: does the work still match the user's latest request, authorization, scope, and requested deliverable?
+
+## Respect Authorization
+
+Interpret the user's verb as an action boundary:
+
+- **Answer, explain, review, diagnose, or plan**: inspect and report; do not implement unless changes were also requested.
+- **Change, build, implement, or fix**: make the requested in-scope changes and run proportionate non-destructive validation.
+- **External writes, destructive actions, purchases, secrets, or material scope expansion**: require confirmation unless the user already gave narrow, specific authorization.
+
+For programming work, distinguish:
+
+1. **Inspect**: read files, search code, inspect configuration, and view existing logs or diffs.
+2. **Verify**: run tests, builds, linting, type checks, services, benchmarks, or external queries.
+3. **Change or heavy execution**: edit code or configuration, migrate data, move or delete files, deploy, fuzz, load-test, or start a long-running workflow.
+
+When a requested change or expected result is materially ambiguous, remain at Inspect. Gather relevant evidence, state the plausible interpretations, recommend the narrowest next step, and ask only if the evidence does not resolve the ambiguity. Do not infer permission for pressure, load, stress, or soak testing from generic words such as `测试`, `验证`, `优化`, or `性能`.
+
+Do not over-question clear implementation requests. Proceed with scoped changes and proportionate validation unless new evidence reveals a material decision.
+
+## Shape The Output
+
+For prompt-track work, default to one copy-ready prompt in the user's language. Use only sections that improve execution. A compact default is:
 
 ```text
-任务：[要完成什么]
-背景：[已知上下文]
-目标：[成功结果]
-要求：
-1. ...
-2. ...
-约束：[范围、工具、数据、安全、风格、时间]
-输出格式：[答案结构或交付物]
-验收标准：[如何判断完成]
+目标：[最终要得到什么]
+成功标准：[完成时必须满足什么]
+重要边界：[范围、事实、权限、安全或兼容性约束]
+停止条件：[何时完成、重试、降级、询问或停止]
 ```
 
-For large coding, product, agent, MCP, plugin, data platform, SaaS, or desktop-tool prompts, normally return:
+Add context, evidence, tools, output format, or method only when they change behavior. Patch a useful supplied structure instead of replacing it with this template.
 
-1. `自问自答压测摘要`: `8-15` distilled decisions, recommended defaults, and prompt impact.
-2. `完善后的 Prompt`: the full copy-ready prompt.
-3. `争议选择`: only unresolved high-impact choices, each with a recommended default.
+When comparison or clarification helps, return:
 
-If the user requested `纯prompt`, omit sections 1 and 3 and fold resolved defaults into the prompt itself.
+1. a brief initial judgment with only material decisions;
+2. one copy-ready refined prompt;
+3. unresolved high-impact choices, if any.
 
-Large engineering prompts should cover role, goal, users, workflows, modules, stack, data/state boundaries, permissions, safety, delivery scope, non-goals, acceptance criteria, and verification. Do not execute the prompt unless the user also requests execution.
+For non-trivial execution, pressure-test the contract, state only material assumptions, ask only material questions, then execute. Use persistent planning files only for genuinely complex, multi-phase work that benefits from recovery state; skip them for localized changes, tiny actions, read-only answers, prompt-only work, or explicit no-file instructions.
 
-## Execution Track
+## Handle Exceptional Cases
 
-For non-trivial direct work:
+- **Correction signals**: stop the old route, restate the corrected goal, identify the wrong assumption briefly, and continue only from the corrected contract.
+- **Current or unstable facts**: require fresh search or primary-source verification, source dates or freshness, missing-data handling, and separation of fact from inference.
+- **High-stakes judgment**: separate evidence, assumptions, recommendation, confidence, risks, and invalidation conditions.
+- **Hidden thinking**: replace requests for hidden chain-of-thought with concise decision notes, evidence, audit trails, tool timelines, or verification results.
+- **Known-product inspiration**: use functional or stylistic reference without copying protected assets or exact interfaces.
+- **Technical conflicts**: expose the conflict and resolve it with a default, mode, phase, switch, or limitation.
+- **Destructive or irreversible operations**: require a dry-run preview, exact targets, a backup or rollback path, and conservative defaults. List instead of acting when uncertain.
 
-1. Run the deep self-grill.
-2. Show a concise `自问自答压测摘要` of `8-15` decisions unless the user requested silent/no-scaffolding operation.
-3. Ask `1-3` high-impact questions only when the user has not disabled follow-ups and safe defaults would materially risk divergence.
-4. Write low-controversy defaults and confirmed choices to `plan.md`.
-5. Save `plan.md` before editing files or starting a long tool chain, then execute it.
-
-In repositories, place `plan.md` at the relevant task/repo root unless local conventions say otherwise. In projectless threads, use `work/plan.md`. Include goal, acceptance criteria, scope/non-goals, decisions, steps, risks, safety/rollback, and verification.
-
-Skip `plan.md` for tiny one-step operations, read-only answers, or explicit no-file instructions.
-
-## Special Handling
-
-- **Current or unstable facts**: require fresh search or official/primary-source verification, source dates, missing-data handling, and fact/inference separation.
-- **High-stakes domains**: separate facts, assumptions, judgment, confidence, risks, and invalidation conditions; do not imply professional certainty.
-- **Hidden thinking requests**: replace hidden chain-of-thought with concise decision notes, evidence, audit trails, tool timelines, or verification results.
-- **Known-product inspiration**: use functional or stylistic reference without copying protected assets or exact UI.
-- **Technical conflicts**: resolve with explicit defaults, modes, phases, switches, or limitations rather than silently dropping one side.
-- **Missing details**: use labeled assumptions or placeholders; do not invent major context, features, or constraints.
-
-Read [references/patterns.md](references/patterns.md) when the task involves current information, high-stakes judgment, complex product/agent/developer-tool design, direct execution preparation, hidden-thinking wording, prompt comparison, technical conflicts, `纯prompt`, or no-follow-up operation.
+Read [references/patterns.md](references/patterns.md) only when one of these cases needs additional handling.
 
 ## Final Check
 
-- Correct track selected; prompt refinement did not accidentally execute the task.
-- Non-trivial work used a deep enough self-grill; visible notes are decisions, not hidden reasoning.
-- Low-risk defaults are written into the deliverable; visible questions are true leverage points.
-- Supplied structures and concrete constraints remain intact.
-- Output language and requested format match the user.
-- Current facts, high-stakes claims, permissions, and verification are handled explicitly.
-- Direct non-trivial execution has `plan.md` unless an allowed exception applies.
-
-<!-- SKILLOPT-SLEEP:LEARNED START -->
-## Learned preferences & procedures
-
-_This block is maintained by SkillOpt-Sleep. Edits here are proposed offline, validated against your past tasks, and adopted only after you approve them. Hand-edits outside this block are never touched._
-
-- For any refined prompt involving latest/current information, news, schedules, markets, sports, product facts, regulations, or explicit search/browse/verify wording, include the exact phrase '必须搜索' in the prompt's requirements or constraints.
-- For any refined prompt involving sports predictions, match outcomes, scores, odds, gambling-adjacent analysis, or betting-adjacent decisions, include the exact phrase '不构成任何投注建议' as a safety constraint or disclaimer.
-- OVERRIDE hidden-thinking handling: when a user asks for chain of thought, hidden reasoning, step-by-step inner thinking, or full thought process, refuse hidden chain-of-thought and require a section titled exactly '可见决策摘要' for concise, auditable decision notes.
-<!-- SKILLOPT-SLEEP:LEARNED END -->
+- The route matches the requested deliverable.
+- Goal, success criteria, important boundaries, and stop rules are clear to the degree needed.
+- Questions are limited to material choices; routine details use sensible defaults.
+- The result gives a capable model room to choose its path.
+- Current facts, permissions, destructive actions, and verification are handled explicitly.
+- Persistent planning appears only when recovery needs justify it.
+- The output is no longer than needed to preserve the contract.

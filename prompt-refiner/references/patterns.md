@@ -1,147 +1,101 @@
 # Refinement Patterns
 
-Load this file only for prompt refinements that need extra handling beyond the core workflow.
-
-## Contents
-
-- Output overrides
-- Self-grill decision record and funnel
-- Current/high-stakes information
-- Complex product and execution planning
-- Conflicts, hidden thinking, and candidate selection
+Load this file only when a task needs handling beyond the core task-contract workflow.
 
 ## Output Overrides
 
 ### Pure Prompt
 
-When the user says `纯prompt`, `只要prompt`, or asks for a copy-ready prompt without commentary:
+When the user says `纯prompt`, `只要prompt`, or requests a copy-ready prompt without commentary:
 
-- return exactly one prompt block
-- preserve the full task framework, constraints, acceptance criteria, and verification
-- fold safe defaults into the prompt instead of explaining them outside it
-- preserve the supplied rules/template structure when one exists
-- omit self-grill summaries, recommendation scaffolding, and controversy lists unless a missing input makes the prompt unusable
+- return exactly one prompt block;
+- preserve the supplied structure when useful;
+- fold safe defaults into the prompt;
+- include only sections that change behavior;
+- omit decision scaffolding unless a missing input makes the prompt unusable.
 
 ### No Follow-Up
 
 When the user says `不要问`, `直接继续`, or requests silent self-grilling:
 
-- answer low- and medium-impact ambiguities with recommended defaults
-- record consequential assumptions in the prompt or `plan.md`
-- continue to the requested deliverable
-- stop only for missing permission, dangerous scope expansion, secrets, or truly blocking information
+- resolve low-risk ambiguity with sensible defaults;
+- record consequential assumptions only when useful for verification or recovery;
+- continue to the requested deliverable;
+- stop only for missing permission, dangerous expansion, secrets, or truly blocking information.
 
-No-follow-up changes how ambiguity is resolved; it does not authorize new external side effects or unsafe assumptions.
+No-follow-up changes how ambiguity is resolved. It does not authorize new external side effects or unsafe assumptions.
 
-## Self-Grill Decision Record
+## Materiality Test
 
-For complex prompts, internally reduce ambiguity into this record:
+Before adding a question, section, example, tool rule, workflow, module, path, or implementation step, ask:
 
-```text
-Question: [what is uncertain?]
-Recommended default: [best answer]
-Evidence: [what in the user request supports it]
-Risk if wrong: [what changes if false]
-Prompt impact: [what to write into the prompt]
-Controversy level: [low | medium | high]
-```
+1. Would omitting it change the goal or completion bar?
+2. Would omitting it create a permission, safety, evidence, cost, or compatibility risk?
+3. Is it required for reproducibility, an external contract, or an explicitly requested method?
+4. Does it define when to finish, retry, fall back, ask, or stop?
 
-Expose only the decisions that materially change scope, cost, safety, architecture, or output quality.
-
-## Deep Self-Grill Funnel
-
-For non-trivial prompt refinement or execution prep, internally ask `20-50` self-grill questions. The goal is not to show every question; the goal is to pressure-test the prompt until routine decisions have been absorbed and only meaningful controversies remain. The visible summary should normally include `8-15` distilled decisions for substantial tasks.
-
-Sort the answers into this funnel:
-
-- `default into prompt`: low-controversy details where a strong default exists. Choose for the user and write the decision into the prompt or plan.
-- `briefly note`: medium-impact assumptions that may matter later but do not require a user decision now.
-- `ask user`: high-impact controversies that change scope, architecture, style, source requirements, permissions, cost, safety posture, or acceptance criteria.
-- `block`: missing information without which no useful prompt or plan can be produced.
-
-When too many questions qualify for `ask user`, merge them into at most `1-3` sharp questions. Each question should include the recommended answer and the practical consequence of choosing it.
+If every answer is no, omit it and let the executing model choose the path.
 
 ## Current Information
 
-When the prompt depends on latest news, prices, schedules, laws, versions, product specs, model capabilities, APIs, company facts, or other unstable facts, require:
+When the task depends on current news, prices, schedules, laws, versions, product specifications, model capabilities, APIs, company facts, or other unstable information, require:
 
-- fresh search or official/primary-source verification
-- source dates or freshness window
-- explicit treatment of missing or uncertain facts
-- separation between facts and inference
+- fresh search or official and primary-source verification;
+- a source date or freshness window;
+- explicit handling of missing or uncertain facts;
+- separation between retrieved facts and inference;
+- a retrieval stop rule so search does not continue only to improve wording or add nonessential detail.
 
 ## High-Stakes Judgment
 
-For investing, medical, legal, safety, betting, or other risky use:
+For investing, medical, legal, safety, betting, or other risky uses:
 
-- require facts before judgment
-- distinguish evidence, assumptions, recommendations, confidence, and uncertainty
-- include concise risk language
-- avoid implying certainty or professional authority
+- establish evidence before judgment;
+- distinguish evidence, assumptions, recommendation, confidence, and uncertainty;
+- state material risks and invalidation conditions;
+- avoid implying professional certainty or guaranteed outcomes.
 
-## Complex Product Or Developer Tool
+## Complex Product Or Engineering Work
 
-For apps, agents, MCP/tooling systems, plugins, SaaS, dashboards, data platforms, and desktop tools, expand vague requests into:
+Do not automatically expand a product or engineering request into a full specification. Add users, workflows, modules, stack, state, security, delivery phases, or named resources only when they materially affect the task contract.
 
-- role and task
-- product/engineering goal
-- target users and use context
-- core workflows
-- required modules
-- configuration surfaces
-- data model or state boundaries
-- security and permission boundaries
-- delivery scope and non-goals
-- acceptance criteria and verification
-- known risks and controversial choices
+For implementation plans, include enough detail to make dependencies, state transitions, failure behavior, privacy or security boundaries, and validation observable. Leave ordinary implementation choices to the executing model.
 
-## Execution Track Plan Gate
+## Persistent Plan Gate
 
-When `prompt-refiner` is being used before direct task execution, do not jump straight to implementation for substantial work. First run the deep self-grill funnel, expose a concise decision summary, then ask up to three high-impact questions if the answer changes scope, architecture, style, data/source requirements, permissions, cost, or acceptance criteria.
+For genuinely complex, multi-phase direct execution that benefits from recovery state, confirm the task contract before implementation. Ask up to three high-impact questions only when safe defaults could materially change the result. Then persist:
 
-After the question round is resolved, create `plan.md` before editing files or running a long tool chain. The plan should include:
+- goal and success criteria;
+- important boundaries and confirmed assumptions;
+- scope and non-goals;
+- a recovery-oriented roadmap;
+- stop, fallback, safety, and rollback rules;
+- verification.
 
-- intent and success criteria
-- defaults selected for the user, assumptions, and user-confirmed choices
-- scope and non-goals
-- implementation steps
-- risks and rollback/safety notes
-- verification steps
+Do not turn the plan into a speculative implementation specification. Skip persistent planning for clear localized changes, tiny actions, read-only answers, prompt-only work, or explicit no-file instructions. Use the host agent's native planning mechanism and paths rather than assuming a particular platform.
 
-Then execute from the plan. Skip the file only for tiny one-step work, read-only answers, or explicit no-file instructions.
+## Technical Conflicts
 
-## Technical Conflict Handling
-
-When requirements conflict, do not silently choose one side. Resolve with a default, mode, phase, switch, or limitation.
+When requirements conflict, do not silently drop one side. State:
 
 ```text
-潜在冲突：[A 要求] 与 [B 要求] 存在冲突，因为 [原因]。
-推荐默认：采用 [策略]，因为 [理由]。
-写入 prompt：
-- 默认行为：[...]
-- 可选模式/阶段：[...]
-- 例外条件：[...]
-- 不能承诺：[...]
+潜在冲突：[A] 与 [B] 冲突，因为 [原因]。
+推荐默认：[策略及理由]。
+边界或模式：[默认行为、例外条件和不能承诺的结果]。
 ```
 
-Common conflicts:
-
-- `single AI call` vs `tool/MCP use`
-- `show full thinking` vs `do not expose hidden chain-of-thought`
-- `high-permission local automation` vs `user safety`
-- `copy a known product` vs `avoid infringement`
-- `quick MVP` vs `production-ready system`
+Prefer a default, mode, phase, switch, or limitation that preserves the user's real goal.
 
 ## Hidden Thinking Requests
 
-Rewrite requests for "complete thinking process", "thinking chain", or "chain of thought" into visible evidence:
+Replace requests for complete hidden reasoning with visible evidence:
 
-- decision notes
-- assumptions
-- audit trail
-- tool timeline
-- input/output summaries
-- test or verification results
+- decision notes;
+- assumptions;
+- audit trail;
+- tool timeline;
+- input/output summaries;
+- test or verification results.
 
 Do not ask for or promise hidden chain-of-thought.
 
@@ -149,6 +103,7 @@ Do not ask for or promise hidden chain-of-thought.
 
 When comparing prompt candidates:
 
-1. Prefer the candidate with clearer scope, constraints, safety boundaries, deliverables, and acceptance criteria.
-2. Merge only details that improve executability without weakening safety or focus.
-3. Produce one final adopted prompt when the user wants a usable result.
+1. Prefer the candidate with the clearest goal, completion bar, material boundaries, and stop rules.
+2. Penalize invented requirements, repeated rules, unnecessary process detail, and decorative structure.
+3. Merge only details that materially improve execution.
+4. Return one adopted prompt when the user wants a usable result.

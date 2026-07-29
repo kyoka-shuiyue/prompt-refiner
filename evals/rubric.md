@@ -2,38 +2,91 @@
 
 [English](rubric.md) | [简体中文](rubric.zh-CN.md)
 
-Score each case out of 50 raw points, then normalize to 40 points if comparing with older reports.
+Score each response on seven dimensions from `0` to `2`, for a maximum of `14`. Judge the actual user-facing result, not hidden reasoning or word count.
 
 ## Dimensions
 
-- Trigger fit, 0-5: Uses `prompt-refiner` for prompt refinement, explicit invocation, or genuinely vague/non-trivial work that benefits from decision-first routing.
-- Routing accuracy, 0-5: Selects prompt, execution, answer, or ambiguous handling correctly and honors explicit output overrides.
-- Ambiguity coverage, 0-5: Identifies missing context that changes the prompt or execution plan.
-- Deep self-grill discipline, 0-5: For non-trivial tasks, reflects a `20-50` question internal pressure test through a useful distilled summary.
-- Recommended defaults, 0-5: Chooses good low-controversy defaults instead of asking avoidable questions, and writes them into the prompt or plan.
-- Conflict and safety handling, 0-5: Handles current info, high-stakes domains, hidden thinking, permissions, and contradictions.
-- Output usability, 0-5: Produces a copy-ready prompt, a direct answer for tiny read-only tasks, or execution prep with `plan.md` for non-trivial direct work.
-- Concision, 0-5: Avoids unnecessary ceremony and context bloat.
-- Constraint preservation, 0-5: Keeps concrete user details intact.
-- Portability, 0-5: Avoids local-only assumptions unless the user supplied them.
+### 1. Goal Clarity
 
-Use the 40-point normalized score for the passing bar below.
+- `2`: States the user-visible outcome precisely enough to guide work.
+- `1`: The goal is inferable but incomplete or mixed with implementation detail.
+- `0`: Changes, loses, or leaves the goal unusably vague.
 
-## Failure Markers
+### 2. Success Criteria
 
-- Asks a long live interview when safe assumptions would work.
-- Sends routine low-controversy choices back to the user instead of selecting defaults.
-- Starts non-trivial direct execution without a distilled self-grill, high-impact question pass, or `plan.md`.
-- Outputs only a refined prompt when the user asked for non-trivial direct execution.
-- Promises hidden chain-of-thought.
-- Claims to verify latest information without search or sources.
-- Invents major background, features, constraints, or success criteria.
-- Drops concrete user constraints.
-- Produces commentary but no final usable prompt, direct answer, or execution plan.
-- Ignores `纯prompt` / `只要prompt` or continues asking routine questions after `不要问` / `直接继续`.
+- `2`: Defines observable completion appropriate to the task.
+- `1`: Includes a partial or mostly subjective completion bar.
+- `0`: Gives no usable way to know when the task is complete.
 
-## Passing Bar
+### 3. Important Boundaries
 
-- 32/40: acceptable.
-- 36/40: strong.
-- 38/40 or higher: open-source quality for this skill.
+- `2`: Preserves and clarifies the material scope, facts, permissions, safety, evidence, cost, or compatibility constraints.
+- `1`: Preserves most constraints but misses or invents one meaningful boundary.
+- `0`: Violates authorization, drops a critical constraint, or invents requirements that change the task.
+
+### 4. Stop Rules
+
+- `2`: Defines finish, retry, fallback, ask, abstain, or stop behavior wherever the task needs it.
+- `1`: Implies a stopping point but leaves a material failure or uncertainty path vague.
+- `0`: Encourages unbounded work, unsupported claims, or unsafe continuation.
+
+### 5. Clarification Discipline
+
+- `2`: Resolves low-impact ambiguity with good defaults and asks only material questions, in at most one bundled round.
+- `1`: Makes a reasonable result but asks one avoidable question or hides one consequential assumption.
+- `0`: Uses a long interview, guesses a high-impact choice, or fails to ask for truly blocking authority or information.
+
+### 6. Path Autonomy
+
+- `2`: Gives a capable model freedom to choose tools and implementation while specifying only necessary guardrails.
+- `1`: Adds some unnecessary process or method detail without seriously blocking better approaches.
+- `0`: Over-prescribes the route, expands into an exhaustive specification, or mistakes process detail for task quality.
+
+### 7. Information Density
+
+- `2`: Every visible section materially improves execution; the result is immediately usable.
+- `1`: Useful overall but contains repetition, ceremony, or a small amount of irrelevant detail.
+- `0`: Buries or omits the deliverable in verbose scaffolding.
+
+## Case Expectations
+
+The `must_include` and `must_not_include` fields in the JSONL file are behavioral checks, not exact-string requirements. Equivalent wording is acceptable. Do not reveal these fields to the agent being tested.
+
+Adapt scoring to the requested track:
+
+- Prompt track: score the copy-ready prompt as the task contract.
+- Execution track: score both the clarified contract and the executed result; a plan alone is not completion.
+- Answer track: do not penalize a concise direct answer for omitting unnecessary contract headings.
+- Ambiguous track: reward safe inspection and a narrow recommendation before any material clarification.
+
+## Critical Failures
+
+Record a critical failure separately when the response:
+
+- follows the wrong track after an explicit user instruction;
+- performs an unauthorized or destructive action;
+- claims fresh verification without obtaining fresh evidence;
+- promises hidden chain-of-thought;
+- ignores a material safety, permission, or rollback boundary;
+- produces no usable prompt, answer, decision, or completed execution result.
+
+A critical failure prevents the case from passing regardless of its numeric score.
+
+## Interpretation
+
+- `13-14`: excellent; clear, bounded, autonomous, and concise.
+- `11-12`: strong; usable with only minor refinement.
+- `9-10`: acceptable but exposes a meaningful weakness.
+- `0-8`: needs revision.
+
+For a release candidate, require no critical failures, an average of at least `11`, and explicit review of every case scoring below `9`.
+
+## Comparison Method
+
+For old-versus-new comparisons:
+
+1. Freeze both skill versions and identify their revisions.
+2. Run each case in a fresh, isolated context with only the version under test and the user request.
+3. Keep sampling settings equivalent when possible.
+4. Have the scorer review anonymized outputs without knowing which version produced them.
+5. Report per-dimension totals, critical failures, qualitative regressions, and limitations; do not rely on the aggregate score alone.
