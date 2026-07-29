@@ -1,138 +1,138 @@
 # prompt-refiner
 
-[English](README.md) | [简体中文](README.zh-CN.md)
+[简体中文](README.md) | [English](README.en.md)
 
-`prompt-refiner` is a model-agnostic skill for turning rough intent into a clear task contract. It helps capable AI models understand the destination and guardrails while leaving them room to choose the best route.
+`prompt-refiner` 是一个模型无关的任务合同完善技能，用来把粗略、零散或存在冲突的意图整理成清晰的任务合同。它帮助聪明的 AI 模型理解终点和护栏，同时保留自主选择最佳路径的空间。
 
-It is not a prompt-lengthener or a fixed questionnaire. It clarifies only what materially affects the work:
+它不是 Prompt 加长器，也不是固定问卷。它只补全真正影响任务的五类信息：
 
-1. **Goal**: the user-visible outcome.
-2. **Success criteria**: what must be true when the task is complete.
-3. **Important boundaries**: scope, facts, permissions, safety, evidence, cost, and compatibility.
-4. **Stop rules**: when to finish, retry, fall back, ask, abstain, or stop.
-5. **Material clarifications**: unresolved choices that would change the first four items.
+1. **目标**：用户最终能看到或获得什么。
+2. **成功标准**：任务完成时必须满足什么。
+3. **重要边界**：范围、事实、权限、安全、证据、成本和兼容性约束。
+4. **停止条件**：何时完成、重试、降级、询问、拒绝判断或停止。
+5. **必要澄清**：哪些未决选择会改变前四项。
 
-Everything else, including tools, modules, workflow, output structure, and implementation steps, is added only when it changes the task contract or the user explicitly asks for it.
+工具、模块、工作流、输出结构和实现步骤都是辅助信息。只有它们会改变任务合同，或用户明确要求时，才应该加入。
 
-## Design Purpose
+## 设计目的
 
-Rough AI requests commonly fail in two opposite ways: they are too vague to complete reliably, or they compensate by prescribing so much process that a capable model cannot choose a better route. `prompt-refiner` is designed to avoid both failures by producing the **smallest sufficient task contract**.
+粗略的 AI 请求经常朝两个相反方向失败：一种是信息太少，模型无法稳定完成；另一种是为了避免模糊而规定过多流程，反而让有能力的模型无法选择更好的路径。`prompt-refiner` 的设计目的，是用**最小充分任务合同**同时避免这两种失败。
 
-As models become more capable, prompts benefit less from prescribing every step and more from defining the right outcome, evidence bar, boundaries, and stopping behavior. The skill therefore aims to:
+模型越聪明，Prompt 越不需要替它规定每一步，更需要把正确目标、证据标准、重要边界和停止行为讲清楚。因此，这个技能会：
 
-- clarify the destination without choosing every road;
-- use safe defaults for low-impact ambiguity;
-- ask only questions whose answers materially change the task;
-- preserve the user's facts, structure, intent, and authorization boundary;
-- require fresh evidence for unstable claims;
-- make completion and failure behavior observable;
-- avoid invented requirements and decorative process.
+- 把终点说清楚，但不替模型规定每条路；
+- 对低影响歧义使用安全默认值；
+- 只询问答案会实质改变任务的问题；
+- 保留用户给出的事实、结构、意图和授权边界；
+- 对时效性事实要求最新证据；
+- 让完成条件与失败处理可以被观察和验证；
+- 避免自行发明需求和堆砌流程。
 
-There is no fixed self-question count, visible-summary quota, or mandatory planning artifact. The amount of refinement scales with the decision risk and complexity of the request.
+它没有固定的内部提问数量、可见摘要数量或强制计划文件。完善深度由任务的风险、复杂度和决策影响决定。
 
-This project deliberately does not optimize for the longest prompt, expose hidden chain-of-thought, force one workflow or toolset, or maintain separate instructions for each model family. Model-specific guidance can inform the design without becoming a runtime dependency.
+这个项目不会追求最长 Prompt，不会要求展示隐藏思考链，不会强制一种工作流或工具组合，也不会为每个模型家族维护独立规则。模型专用指南可以影响设计，但不会成为运行时依赖。
 
-## Evaluation Snapshot
+## 评测概览
 
-The skill content in commit `ead59ad` was compared with repository commit `11010eb` on six representative cases using the checked-in 14-point rubric.
+提交 `ead59ad` 中的技能内容使用仓库内的 14 分量表，在六个代表性用例上与提交 `11010eb` 的旧版进行了对照。
 
-| Evaluation | Previous version | Current version | Result |
+| 评测 | 旧版 | 当前版本 | 结果 |
 | --- | ---: | ---: | --- |
-| Independent runs | `71/84` | `78/84` | Current version `+7` |
-| Anonymized comparison | `60/84` | `84/84` | Current version preferred |
+| 独立测试 | `71/84` | `78/84` | 当前版本 `+7` |
+| 匿名对照 | `60/84` | `84/84` | 评审选择当前版本 |
 
-The largest gains came from path autonomy, information density, inspecting before asking on ambiguous code work, and avoiding mandatory planning for clear localized changes. See the [full forward-test report](evals/forward-test-report.md) for per-case scores, method, limitations, and qualitative findings.
+主要提升来自路径自主性、信息密度、模糊代码请求先检查再询问，以及明确的局部修改不再强制创建计划。每个用例的分数、方法、限制和定性发现见[完整前向测试报告](evals/forward-test-report.zh-CN.md)。
 
-These scores are directional evidence, not a universal benchmark. Six of the 13 repository cases were used; downstream research, code changes, tests, and deletions were not executed; and model sampling can vary.
+这些分数是方向性证据，不是通用基准。本次使用了仓库 13 条用例中的六条，没有真正执行下游研究、代码修改、测试或删除操作，并且模型采样存在波动。
 
-## References and Interpretation
+## 参考资料与项目解释
 
-- [OpenAI GPT-5.6 model and prompting guidance](https://developers.openai.com/api/docs/guides/prompt-guidance-gpt-5p6): recommends leaner prompts, explicit autonomy and approval boundaries, representative evaluation, and preserving domain context, hard constraints, success criteria, and question-triggering ambiguities instead of prescribing every step.
-- [OpenAI这次给GPT-5.6写了一份专门的提示词](https://www.bilibili.com/video/BV13F3g6VExA/) by 清华姜学长, published `2026-07-25`: a public Chinese discussion that helped motivate the project's outcome-first interpretation of the official guidance.
-- [Evaluation rubric](evals/rubric.md), [test cases](evals/prompt-refiner-cases.jsonl), and [forward-test report](evals/forward-test-report.md): the repository's own evidence for whether that interpretation improves behavior.
+- [OpenAI GPT-5.6 模型与 Prompt 指南](https://developers.openai.com/api/docs/guides/prompt-guidance-gpt-5p6)：建议使用更精简的 Prompt，集中定义自主权和审批边界，在代表性任务上评测，并保留领域上下文、硬约束、成功标准和需要触发询问的重要歧义，而不是规定每一步。
+- [OpenAI这次给GPT-5.6写了一份专门的提示词](https://www.bilibili.com/video/BV13F3g6VExA/)：清华姜学长发布于 `2026-07-25` 的中文公开解读，促使本项目进一步采用“结果优先”的方式理解官方指南。
+- [评测量表](evals/rubric.zh-CN.md)、[测试用例](evals/prompt-refiner-cases.jsonl)和[前向测试报告](evals/forward-test-report.zh-CN.md)：用于检验本项目的解释是否真正改善模型行为。
 
-The five-field task contract is this project's synthesis, not an official OpenAI template or an endorsement by OpenAI or the video's creator. Although GPT-5.6 prompted the redesign, the resulting skill stays model-agnostic because the same contract is useful whenever a capable model needs a clear destination, meaningful guardrails, and room to choose its path.
+五字段任务合同是本项目自己的综合设计，不是 OpenAI 官方模板，也不代表 OpenAI 或视频作者为本项目背书。虽然 GPT-5.6 的指南促成了这次重新设计，但最终技能保持模型无关，因为只要一个模型足够聪明，需要明确终点、重要护栏和自主路径空间，这套任务合同就仍然有用。
 
-## Routing Behavior
+## 路由行为
 
-| User intent | Result |
+| 用户意图 | 技能行为 |
 | --- | --- |
-| Refine, rewrite, compare, or stress-test a prompt | Return a copy-ready refined prompt |
-| Perform the underlying task | Clarify material decisions, then execute within authorization |
-| Ask a read-only question | Answer directly without prompt ceremony |
-| Give an ambiguous request | Inspect safely, infer low-risk defaults, or ask one bundled clarification |
-| Say `纯prompt` or `只要prompt` | Return exactly one prompt block |
-| Say `不要问` or `直接继续` | Resolve safe ambiguity internally and continue |
+| 完善、改写、比较或压测 Prompt | 返回可直接复制的完善版 Prompt |
+| 执行底层任务 | 澄清关键决策后，在授权范围内执行 |
+| 询问只读问题 | 直接回答，不强制套 Prompt 框架 |
+| 请求存在歧义 | 先安全检查，推断低风险默认值，必要时集中澄清一次 |
+| 明确说 `纯prompt` 或 `只要prompt` | 只返回一个 Prompt 代码块 |
+| 明确说 `不要问` 或 `直接继续` | 内部解决可安全默认的歧义并继续 |
 
-## Install
+## 安装
 
-Clone the repository:
+克隆仓库：
 
 ```bash
 git clone https://github.com/kyoka-shuiyue/prompt-refiner.git
 cd prompt-refiner
 ```
 
-Copy the canonical `prompt-refiner/` folder into the skill directory required by your AI agent or skill host:
+把唯一的 `prompt-refiner/` 技能目录复制到你的 AI Agent 或技能宿主所要求的目录：
 
 ```bash
 cp -R prompt-refiner /path/to/your-agent/skills/
 ```
 
-Windows PowerShell:
+Windows PowerShell：
 
 ```powershell
 $skillsRoot = "C:\path\to\your-agent\skills"
 Copy-Item -Recurse -Force .\prompt-refiner (Join-Path $skillsRoot "prompt-refiner")
 ```
 
-Restart or reload the host if it does not detect skills automatically. The host must support `SKILL.md`-style skills; consult its documentation for the exact discovery directory and invocation syntax.
+如果宿主不会自动检测技能，请重新加载或重启。宿主需要支持 `SKILL.md` 风格的技能；准确目录和调用语法以对应宿主文档为准。
 
-To update, run `git pull --ff-only` in this repository and copy the canonical folder again.
+更新时，在本仓库运行 `git pull --ff-only`，然后重新复制这个唯一技能目录。
 
-## Usage
+## 使用方法
 
-Explicit invocation:
+显式调用：
 
 ```text
-Use $prompt-refiner to improve this request:
-Build a local knowledge-base tool that can search my files.
+使用 $prompt-refiner 完善这个请求：
+做一个可以检索本地文件的知识库工具。
 ```
 
-Prompt-only output:
+只输出 Prompt：
 
 ```text
 $prompt-refiner 纯prompt：完善这个本地 AI 桌面工具的开发需求。
 ```
 
-Direct execution with safe defaults:
+使用安全默认值并直接执行：
 
 ```text
 $prompt-refiner 不要问，使用安全默认值，在当前仓库完成这个功能并验证结果。
 ```
 
-Hosts that support implicit skill routing may also load the skill automatically from its frontmatter description.
+支持隐式技能路由的宿主，也可以根据 frontmatter 中的描述自动加载该技能。
 
-## How It Works
+## 工作方式
 
-1. Identify whether the user wants a prompt, direct execution, a read-only answer, or clarification.
-2. Pressure-test the five task-contract fields without a fixed question quota.
-3. Resolve low-impact ambiguity with sensible defaults.
-4. Ask at most one round of `1-3` questions only when the answer changes scope, permissions, safety, evidence, cost, or acceptance criteria.
-5. Produce the smallest sufficient prompt, answer, or execution contract.
-6. Stress-test for observable completion, authorization, evidence freshness, stop behavior, contradictions, and unnecessary prescription.
+1. 先判断用户要的是 Prompt、直接执行、只读回答还是澄清。
+2. 围绕五项任务合同字段进行内部压测，不设置固定问题数量。
+3. 对低影响歧义选择合理默认值。
+4. 只有答案会改变范围、权限、安全、证据、成本或验收标准时，才进行最多一轮、`1-3` 个集中问题的澄清。
+5. 输出最小充分的 Prompt、答案或执行合同。
+6. 检查完成标准、授权、信息时效、停止行为、规则冲突和不必要的路径规定。
 
-Persistent planning is reserved for genuinely complex, multi-phase execution that benefits from recovery state. Clear localized work, read-only answers, and prompt-only tasks stay lightweight.
+只有真正复杂、多阶段且需要恢复上下文的执行任务，才使用持久计划。明确的局部修改、只读回答和纯 Prompt 工作保持轻量。
 
-## Repository Layout
+## 仓库结构
 
 ```text
 prompt-refiner/
-  SKILL.md                  Canonical model-agnostic skill
+  SKILL.md                  唯一的模型无关技能
   agents/
-    openai.yaml             Optional interface metadata for compatible hosts
+    openai.yaml             兼容宿主可选使用的界面元数据
   references/
-    patterns.md             Special-case refinement patterns
+    patterns.md             特殊情况处理模式
 evals/
   prompt-refiner-cases.jsonl
   rubric.md
@@ -140,35 +140,35 @@ evals/
   forward-test-report.md
   forward-test-report.zh-CN.md
 README.md
-README.zh-CN.md
+README.en.md
 LICENSE
 ```
 
-The repository contains one canonical skill. Files under `agents/` are host-facing metadata for that same skill, not separate model or client versions.
+本仓库只维护一个规范版本。`agents/` 下的文件是同一技能的宿主界面元数据，不是不同模型或客户端的独立版本。
 
-## Reproduce The Evaluation
+## 复现评测
 
-The manual suite covers clear rewrites, vague product requests, current information, ambiguous code changes, scoped implementation, destructive operations, high-stakes judgment, hidden-thinking requests, technical conflicts, output overrides, structure preservation, and authorization boundaries.
+手动评测集覆盖明确改写、模糊产品需求、时效信息、模糊代码修改、授权明确的局部实现、破坏性操作、高风险判断、隐藏思考请求、技术冲突、输出覆盖、结构保留和授权边界。
 
-To evaluate a revision:
+评测步骤：
 
-1. Load the skill under test in a fresh agent context.
-2. Run each request in [evals/prompt-refiner-cases.jsonl](evals/prompt-refiner-cases.jsonl) without revealing its expectations.
-3. Score the result with [evals/rubric.md](evals/rubric.md).
-4. Record the exact revision, method, limitations, and results in the forward-test report.
+1. 在全新的 Agent 上下文中加载待测技能。
+2. 逐条运行 [evals/prompt-refiner-cases.jsonl](evals/prompt-refiner-cases.jsonl) 中的请求，不向被测 Agent 展示预期行为。
+3. 使用 [evals/rubric.zh-CN.md](evals/rubric.zh-CN.md) 评分。
+4. 在前向测试报告中记录准确版本、方法、限制和结果。
 
-The rubric rewards goal clarity, success criteria, important boundaries, stop rules, clarification discipline, path autonomy, and information density. It does not reward verbosity or hidden reasoning. Read the [full report](evals/forward-test-report.md) before interpreting aggregate scores.
+量表评估目标清晰度、成功标准、重要边界、停止条件、澄清纪律、路径自主性和信息密度，不奖励冗长内容或隐藏思考。解读总分前，请先阅读[完整报告](evals/forward-test-report.zh-CN.md)。
 
-## Design Principles
+## 设计原则
 
-- Task contracts over exhaustive specifications.
-- Observable success over vague quality claims.
-- Safe defaults over avoidable questions.
-- Important boundaries over prescribed implementation paths.
-- Fresh evidence over stale assumptions.
-- Visible decisions and verification over hidden chain-of-thought.
-- Stop when the contract is sufficient.
+- 任务合同优先于穷举规格。
+- 可观察的成功标准优先于模糊质量要求。
+- 安全默认值优先于不必要的追问。
+- 重要边界优先于规定实现路径。
+- 最新证据优先于过时假设。
+- 可见决策和验证优先于隐藏思考链。
+- 任务合同充分后立即停止扩写。
 
-## License
+## 许可证
 
-MIT. See [LICENSE](LICENSE).
+MIT，详见 [LICENSE](LICENSE)。
