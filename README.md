@@ -4,6 +4,14 @@
 
 `prompt-refiner` 是一个模型无关的任务合同完善技能，用来把粗略、零散或存在冲突的意图整理成清晰的任务合同。它帮助聪明的 AI 模型理解终点和护栏，同时保留自主选择最佳路径的空间。
 
+## 一行安装到 Codex（全局）
+
+```bash
+npx -y skills add kyoka-shuiyue/prompt-refiner --skill prompt-refiner --global --agent codex --yes
+```
+
+需要 Node.js `22.20.0` 或更高版本。安装后请重启 Codex。
+
 它不是 Prompt 加长器，也不是固定问卷。它只补全真正影响任务的五类信息：
 
 1. **目标**：用户最终能看到或获得什么。
@@ -64,7 +72,7 @@
 | 明确说 `纯prompt` 或 `只要prompt` | 只返回一个 Prompt 代码块 |
 | 明确说 `不要问` 或 `直接继续` | 内部解决可安全默认的歧义并继续 |
 
-## 安装
+## 手动安装
 
 克隆仓库：
 

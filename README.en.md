@@ -4,6 +4,14 @@
 
 `prompt-refiner` is a model-agnostic skill for turning rough intent into a clear task contract. It helps capable AI models understand the destination and guardrails while leaving them room to choose the best route.
 
+## One-Command Global Install for Codex
+
+```bash
+npx -y skills add kyoka-shuiyue/prompt-refiner --skill prompt-refiner --global --agent codex --yes
+```
+
+Requires Node.js `22.20.0` or newer. Restart Codex after installation.
+
 It is not a prompt-lengthener or a fixed questionnaire. It clarifies only what materially affects the work:
 
 1. **Goal**: the user-visible outcome.
@@ -64,7 +72,7 @@ The five-field task contract is this project's synthesis, not an official OpenAI
 | Say `纯prompt` or `只要prompt` | Return exactly one prompt block |
 | Say `不要问` or `直接继续` | Resolve safe ambiguity internally and continue |
 
-## Install
+## Manual Install
 
 Clone the repository:
 
