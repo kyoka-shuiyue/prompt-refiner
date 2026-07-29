@@ -14,9 +14,11 @@ It is not a prompt-lengthener or a fixed questionnaire. It clarifies only what m
 
 Everything else, including tools, modules, workflow, output structure, and implementation steps, is added only when it changes the task contract or the user explicitly asks for it.
 
-## Why This Approach
+## Design Purpose
 
-As models become more capable, prompts benefit less from prescribing every step and more from defining the right outcome, evidence bar, boundaries, and stopping behavior. `prompt-refiner` therefore aims for the smallest sufficient contract:
+Rough AI requests commonly fail in two opposite ways: they are too vague to complete reliably, or they compensate by prescribing so much process that a capable model cannot choose a better route. `prompt-refiner` is designed to avoid both failures by producing the **smallest sufficient task contract**.
+
+As models become more capable, prompts benefit less from prescribing every step and more from defining the right outcome, evidence bar, boundaries, and stopping behavior. The skill therefore aims to:
 
 - clarify the destination without choosing every road;
 - use safe defaults for low-impact ambiguity;
@@ -27,6 +29,29 @@ As models become more capable, prompts benefit less from prescribing every step 
 - avoid invented requirements and decorative process.
 
 There is no fixed self-question count, visible-summary quota, or mandatory planning artifact. The amount of refinement scales with the decision risk and complexity of the request.
+
+This project deliberately does not optimize for the longest prompt, expose hidden chain-of-thought, force one workflow or toolset, or maintain separate instructions for each model family. Model-specific guidance can inform the design without becoming a runtime dependency.
+
+## Evaluation Snapshot
+
+The skill content in commit `ead59ad` was compared with repository commit `11010eb` on six representative cases using the checked-in 14-point rubric.
+
+| Evaluation | Previous version | Current version | Result |
+| --- | ---: | ---: | --- |
+| Independent runs | `71/84` | `78/84` | Current version `+7` |
+| Anonymized comparison | `60/84` | `84/84` | Current version preferred |
+
+The largest gains came from path autonomy, information density, inspecting before asking on ambiguous code work, and avoiding mandatory planning for clear localized changes. See the [full forward-test report](evals/forward-test-report.md) for per-case scores, method, limitations, and qualitative findings.
+
+These scores are directional evidence, not a universal benchmark. Six of the 13 repository cases were used; downstream research, code changes, tests, and deletions were not executed; and model sampling can vary.
+
+## References and Interpretation
+
+- [OpenAI GPT-5.6 model and prompting guidance](https://developers.openai.com/api/docs/guides/prompt-guidance-gpt-5p6): recommends leaner prompts, explicit autonomy and approval boundaries, representative evaluation, and preserving domain context, hard constraints, success criteria, and question-triggering ambiguities instead of prescribing every step.
+- [OpenAI这次给GPT-5.6写了一份专门的提示词](https://www.bilibili.com/video/BV13F3g6VExA/) by 清华姜学长, published `2026-07-25`: a public Chinese discussion that helped motivate the project's outcome-first interpretation of the official guidance.
+- [Evaluation rubric](evals/rubric.md), [test cases](evals/prompt-refiner-cases.jsonl), and [forward-test report](evals/forward-test-report.md): the repository's own evidence for whether that interpretation improves behavior.
+
+The five-field task contract is this project's synthesis, not an official OpenAI template or an endorsement by OpenAI or the video's creator. Although GPT-5.6 prompted the redesign, the resulting skill stays model-agnostic because the same contract is useful whenever a capable model needs a clear destination, meaningful guardrails, and room to choose its path.
 
 ## Routing Behavior
 
@@ -121,7 +146,7 @@ LICENSE
 
 The repository contains one canonical skill. Files under `agents/` are host-facing metadata for that same skill, not separate model or client versions.
 
-## Evaluation
+## Reproduce The Evaluation
 
 The manual suite covers clear rewrites, vague product requests, current information, ambiguous code changes, scoped implementation, destructive operations, high-stakes judgment, hidden-thinking requests, technical conflicts, output overrides, structure preservation, and authorization boundaries.
 
@@ -132,7 +157,7 @@ To evaluate a revision:
 3. Score the result with [evals/rubric.md](evals/rubric.md).
 4. Record the exact revision, method, limitations, and results in the forward-test report.
 
-The rubric rewards goal clarity, success criteria, important boundaries, stop rules, clarification discipline, path autonomy, and information density. It does not reward verbosity or hidden reasoning.
+The rubric rewards goal clarity, success criteria, important boundaries, stop rules, clarification discipline, path autonomy, and information density. It does not reward verbosity or hidden reasoning. Read the [full report](evals/forward-test-report.md) before interpreting aggregate scores.
 
 ## Design Principles
 
