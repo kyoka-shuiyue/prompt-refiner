@@ -9,7 +9,7 @@ Load this file only when a task needs handling beyond the core task-contract wor
 When the user says `纯prompt`, `只要prompt`, or requests a copy-ready prompt without commentary:
 
 - return exactly one prompt block;
-- preserve the supplied structure when useful;
+- preserve the supplied structure when it is useful;
 - fold safe defaults into the prompt;
 - include only sections that change behavior;
 - omit decision scaffolding unless a missing input makes the prompt unusable.
@@ -44,37 +44,37 @@ When the task depends on current news, prices, schedules, laws, versions, produc
 - a source date or freshness window;
 - explicit handling of missing or uncertain facts;
 - separation between retrieved facts and inference;
-- a retrieval stop rule so search does not continue only to improve wording or add nonessential detail.
+- a retrieval stop rule so search does not continue only to improve phrasing or add nonessential detail.
 
 ## High-Stakes Judgment
 
-For investing, medical, legal, safety, betting, or other risky uses:
+For investing, medical, legal, safety, betting, or other risky use:
 
 - establish evidence before judgment;
 - distinguish evidence, assumptions, recommendation, confidence, and uncertainty;
 - state material risks and invalidation conditions;
-- avoid implying professional certainty or guaranteed outcomes.
+- avoid implying professional certainty.
 
-## Complex Product Or Engineering Work
+## Complex Product Or Developer Tool
 
 Do not automatically expand a product or engineering request into a full specification. Add users, workflows, modules, stack, state, security, delivery phases, or named resources only when they materially affect the task contract.
 
-For implementation plans, include enough detail to make dependencies, state transitions, failure behavior, privacy or security boundaries, and validation observable. Leave ordinary implementation choices to the executing model.
+For implementation plans, include enough detail to make dependencies, state transitions, failure behavior, privacy or security boundaries, and validation observable. Leave ordinary implementation choices to the executing agent.
 
-## Persistent Plan Gate
+## Execution Plan Gate
 
-For genuinely complex, multi-phase direct execution that benefits from recovery state, confirm the task contract before implementation. Ask up to three high-impact questions only when safe defaults could materially change the result. Then persist:
+For genuinely complex, multi-phase direct execution that benefits from recovery state, confirm the task contract before implementation. Ask up to three high-impact questions only when safe defaults could materially change the result. Then write a persistent plan file containing:
 
 - goal and success criteria;
 - important boundaries and confirmed assumptions;
 - scope and non-goals;
-- a recovery-oriented roadmap;
+- an execution roadmap at the level needed for recovery;
 - stop, fallback, safety, and rollback rules;
 - verification.
 
-Do not turn the plan into a speculative implementation specification. Skip persistent planning for clear localized changes, tiny actions, read-only answers, prompt-only work, or explicit no-file instructions. Use the host agent's native planning mechanism and paths rather than assuming a particular platform.
+Keep the plan file current across phases so a fresh session can resume from it. Do not turn the plan into a speculative implementation specification. Skip it for clear localized changes, tiny actions, read-only answers, prompt-only work, or explicit no-file instructions.
 
-## Technical Conflicts
+## Technical Conflict Handling
 
 When requirements conflict, do not silently drop one side. State:
 

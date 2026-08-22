@@ -2,9 +2,54 @@
 
 [简体中文](README.md) | [English](README.en.md)
 
-`prompt-refiner` is a model-agnostic skill for turning rough intent into a clear task contract. It helps capable AI models understand the destination and guardrails while leaving them room to choose the best route.
+`prompt-refiner` is a model-agnostic AI skill: it turns rough, scattered, or self-contradictory requests into a clear task contract, so the model knows where the destination is and where the guardrails are — while keeping the freedom to choose its own route.
 
-## One-Command Global Install for Codex
+It works in any AI coding assistant or agent that supports the `SKILL.md` skill format (Codex, Claude Code, Cursor, and others). It is not tied to any specific model or client.
+
+## A Quick Example
+
+You tell the AI:
+
+> Build me a tool that searches my local files. Make it fast.
+
+What can the AI do with that? Which stack? Is "fast" about startup or search? Does it need a UI? The model has to guess — and if it guesses wrong, you pay for the rework.
+
+After `prompt-refiner`, the model receives:
+
+```text
+Goal: a CLI knowledge-base tool that indexes local file contents and returns
+matching files and snippets for a keyword query.
+Success criteria: searches a directory of 10k files return within 3 seconds
+for common keywords; supports txt / md / pdf text.
+Boundaries: read-only access to the specified directory; no network; never
+modifies source files.
+Stop rules: ship a working CLI version first; a GUI is a possible follow-up,
+out of scope for now.
+```
+
+Notice the difference: barely more words, but the **goal, the bar, the boundaries, and the scope** are all clear. No guessing on either side.
+
+## The Problem It Solves
+
+Requests to AI usually fail in one of two opposite ways:
+
+1. **Too little information** — "optimize the performance a bit." The model does not know the baseline, the target, or whether it may change interfaces, so it guesses.
+2. **Too much prescription** — to prevent the model from wandering, you dictate every step. The model could have found a better path, but your process ties its hands.
+
+`prompt-refiner` answers with a **smallest sufficient task contract** that avoids both traps: it fills in only the information that materially changes the result and leaves the rest to the model's judgment.
+
+The smarter the model, the less your prompt needs to dictate each step — and the more it needs to state four things clearly:
+
+- **What** you want (the goal)
+- **What counts as done** (success criteria)
+- **What it must not touch** (important boundaries)
+- **When to stop** (stop rules)
+
+These four, plus "which open choices are worth asking about," are the five fields of the task contract. Tools, modules, workflows, and implementation steps are supporting details — include them only when they change the contract itself or when explicitly requested.
+
+## Installation
+
+### Option 1: One-Command Global Install for Codex
 
 ```bash
 npx -y skills add kyoka-shuiyue/prompt-refiner --skill prompt-refiner --global --agent codex --yes
@@ -12,171 +57,153 @@ npx -y skills add kyoka-shuiyue/prompt-refiner --skill prompt-refiner --global -
 
 Requires Node.js `22.20.0` or newer. Restart Codex after installation.
 
-It is not a prompt-lengthener or a fixed questionnaire. It clarifies only what materially affects the work:
-
-1. **Goal**: the user-visible outcome.
-2. **Success criteria**: what must be true when the task is complete.
-3. **Important boundaries**: scope, facts, permissions, safety, evidence, cost, and compatibility.
-4. **Stop rules**: when to finish, retry, fall back, ask, abstain, or stop.
-5. **Material clarifications**: unresolved choices that would change the first four items.
-
-Everything else, including tools, modules, workflow, output structure, and implementation steps, is added only when it changes the task contract or the user explicitly asks for it.
-
-## Design Purpose
-
-Rough AI requests commonly fail in two opposite ways: they are too vague to complete reliably, or they compensate by prescribing so much process that a capable model cannot choose a better route. `prompt-refiner` is designed to avoid both failures by producing the **smallest sufficient task contract**.
-
-As models become more capable, prompts benefit less from prescribing every step and more from defining the right outcome, evidence bar, boundaries, and stopping behavior. The skill therefore aims to:
-
-- clarify the destination without choosing every road;
-- use safe defaults for low-impact ambiguity;
-- ask only questions whose answers materially change the task;
-- preserve the user's facts, structure, intent, and authorization boundary;
-- require fresh evidence for unstable claims;
-- make completion and failure behavior observable;
-- avoid invented requirements and decorative process.
-
-There is no fixed self-question count, visible-summary quota, or mandatory planning artifact. The amount of refinement scales with the decision risk and complexity of the request.
-
-This project deliberately does not optimize for the longest prompt, expose hidden chain-of-thought, force one workflow or toolset, or maintain separate instructions for each model family. Model-specific guidance can inform the design without becoming a runtime dependency.
-
-## Evaluation Snapshot
-
-The skill content in commit `ead59ad` was compared with repository commit `11010eb` on six representative cases using the checked-in 14-point rubric.
-
-| Evaluation | Previous version | Current version | Result |
-| --- | ---: | ---: | --- |
-| Independent runs | `71/84` | `78/84` | Current version `+7` |
-| Anonymized comparison | `60/84` | `84/84` | Current version preferred |
-
-The largest gains came from path autonomy, information density, inspecting before asking on ambiguous code work, and avoiding mandatory planning for clear localized changes. See the [full forward-test report](evals/forward-test-report.md) for per-case scores, method, limitations, and qualitative findings.
-
-These scores are directional evidence, not a universal benchmark. Six of the 13 repository cases were used; downstream research, code changes, tests, and deletions were not executed; and model sampling can vary.
-
-## References and Interpretation
-
-- [OpenAI GPT-5.6 model and prompting guidance](https://developers.openai.com/api/docs/guides/prompt-guidance-gpt-5p6): recommends leaner prompts, explicit autonomy and approval boundaries, representative evaluation, and preserving domain context, hard constraints, success criteria, and question-triggering ambiguities instead of prescribing every step.
-- [OpenAI这次给GPT-5.6写了一份专门的提示词](https://www.bilibili.com/video/BV13F3g6VExA/) by 清华姜学长, published `2026-07-25`: a public Chinese discussion that helped motivate the project's outcome-first interpretation of the official guidance.
-- [Evaluation rubric](evals/rubric.md), [test cases](evals/prompt-refiner-cases.jsonl), and [forward-test report](evals/forward-test-report.md): the repository's own evidence for whether that interpretation improves behavior.
-
-The five-field task contract is this project's synthesis, not an official OpenAI template or an endorsement by OpenAI or the video's creator. Although GPT-5.6 prompted the redesign, the resulting skill stays model-agnostic because the same contract is useful whenever a capable model needs a clear destination, meaningful guardrails, and room to choose its path.
-
-## Routing Behavior
-
-| User intent | Result |
-| --- | --- |
-| Refine, rewrite, compare, or stress-test a prompt | Return a copy-ready refined prompt |
-| Perform the underlying task | Clarify material decisions, then execute within authorization |
-| Ask a read-only question | Answer directly without prompt ceremony |
-| Give an ambiguous request | Inspect safely, infer low-risk defaults, or ask one bundled clarification |
-| Say `纯prompt` or `只要prompt` | Return exactly one prompt block |
-| Say `不要问` or `直接继续` | Resolve safe ambiguity internally and continue |
-
-## Manual Install
-
-Clone the repository:
+### Option 2: Manual Install (Any SKILL.md-Compatible Host)
 
 ```bash
 git clone https://github.com/kyoka-shuiyue/prompt-refiner.git
 cd prompt-refiner
 ```
 
-Copy the canonical `prompt-refiner/` folder into the skill directory required by your AI agent or skill host:
+Copy the `prompt-refiner/` directory into your agent's skills directory:
 
 ```bash
+# macOS / Linux
 cp -R prompt-refiner /path/to/your-agent/skills/
 ```
 
-Windows PowerShell:
-
 ```powershell
+# Windows PowerShell
 $skillsRoot = "C:\path\to\your-agent\skills"
 Copy-Item -Recurse -Force .\prompt-refiner (Join-Path $skillsRoot "prompt-refiner")
 ```
 
-Restart or reload the host if it does not detect skills automatically. The host must support `SKILL.md`-style skills; consult its documentation for the exact discovery directory and invocation syntax.
+Reload or restart the host if it does not auto-detect skills. The exact skills directory and invocation syntax follow your host's documentation.
 
-To update, run `git pull --ff-only` in this repository and copy the canonical folder again.
+To update, run `git pull --ff-only` in this repository and copy the skill directory again.
 
 ## Usage
 
-Explicit invocation:
+### Automatic Triggering
+
+Hosts with implicit skill routing load it automatically based on the frontmatter description — just talk normally.
+
+### Explicit Invocation
+
+Refine a rough request:
 
 ```text
-Use $prompt-refiner to improve this request:
-Build a local knowledge-base tool that can search my files.
+Use $prompt-refiner to refine this request:
+Build a knowledge-base tool that can search local files.
 ```
 
-Prompt-only output:
+### Quick Commands
+
+`prompt-refiner` recognizes a few commands that control output style:
+
+| Command | Effect |
+| --- | --- |
+| `纯prompt` / `只要prompt` | Return exactly one copy-ready prompt block, no commentary |
+| `不要问` / `直接继续` | Do not ask; resolve ambiguity with safe defaults and proceed |
+
+For example:
 
 ```text
 $prompt-refiner 纯prompt：完善这个本地 AI 桌面工具的开发需求。
 ```
 
-Direct execution with safe defaults:
-
 ```text
 $prompt-refiner 不要问，使用安全默认值，在当前仓库完成这个功能并验证结果。
 ```
 
-Hosts that support implicit skill routing may also load the skill automatically from its frontmatter description.
+### How It Handles Four Kinds of Requests
+
+| You want | It does |
+| --- | --- |
+| To refine, rewrite, or compare a prompt | Returns one copy-ready refined prompt; does not execute it |
+| The task done | Clarifies key decisions, then executes within the authorized boundary |
+| A read-only question answered | Answers directly; no prompt scaffolding |
+| Something ambiguous | Inspects safely, infers low-risk defaults, and asks at most one bundled round only if needed |
 
 ## How It Works
 
-1. Identify whether the user wants a prompt, direct execution, a read-only answer, or clarification.
-2. Pressure-test the five task-contract fields without a fixed question quota.
-3. Resolve low-impact ambiguity with sensible defaults.
-4. Ask at most one round of `1-3` questions only when the answer changes scope, permissions, safety, evidence, cost, or acceptance criteria.
-5. Produce the smallest sufficient prompt, answer, or execution contract.
-6. Stress-test for observable completion, authorization, evidence freshness, stop behavior, contradictions, and unnecessary prescription.
+1. **Classify the deliverable**: prompt, direct execution, read-only answer, or clarification.
+2. **Pressure-test internally**: self-grill around the five contract fields, with no fixed question quota, until answers stop changing the contract.
+3. **Default when safe**: low-impact ambiguity is resolved with sensible defaults instead of interrupting you.
+4. **Ask only what matters**: when an answer would change scope, permissions, safety, cost, or acceptance criteria, ask at most one round of 1-3 questions, each with a recommended default.
+5. **Produce the smallest sufficient result**: a copy-ready prompt, a direct answer, or an execution contract.
+6. **Stress-test before delivery**: is the completion bar observable, are permissions clear, do any rules contradict, is there unnecessary prescription?
 
-Persistent planning is reserved for genuinely complex, multi-phase execution that benefits from recovery state. Clear localized work, read-only answers, and prompt-only tasks stay lightweight.
+Only genuinely complex, multi-phase execution that benefits from recovery state gets a persistent plan file. Clear localized changes, read-only answers, and prompt-only work stay lightweight.
 
-## Repository Layout
+## FAQ
+
+**Q: Will it make my prompt longer?**
+
+No. Its core principle is "smallest sufficient" — keep only what affects the goal, the bar, the boundaries, and the stop rules; drop filler process and template boilerplate. Most refined prompts are shorter and denser than the original.
+
+**Q: Will it interrogate me with a barrage of questions?**
+
+No. It asks you at most one round of 1-3 questions, and only questions whose answers materially change the task. Everything else is resolved internally with safe defaults.
+
+**Q: Which models or tools does it support?**
+
+Any host that supports the `SKILL.md` skill format, including Codex, Claude Code, and Cursor. The skill content is model-agnostic: it depends on no vendor-specific API, tool combination, or workflow, and it does not maintain separate versions per model.
+
+**Q: I use voice input and my messages come out garbled. Can it handle that?**
+
+Yes. Transcription errors, homophones, scrambled word order, and swallowed verbs are handled by rebuilding the intended meaning first, instead of executing the literal ambiguity. Claims like "I changed X to Y" are verified before being treated as fact.
+
+**Q: How is this different from "ask the AI more questions"?**
+
+The difference is **filtered questions**. An unrestricted model will ask about trivial details; this skill resolves everything it safely can with defaults first, and leaves for you only the decisions where a wrong choice would change the outcome.
+
+## Repository Structure
 
 ```text
 prompt-refiner/
-  SKILL.md                  Canonical model-agnostic skill
+  SKILL.md                  The single canonical skill (model-agnostic)
   agents/
     openai.yaml             Optional interface metadata for compatible hosts
   references/
-    patterns.md             Special-case refinement patterns
+    patterns.md             Special-case handling patterns (loaded on demand)
 evals/
-  prompt-refiner-cases.jsonl
-  rubric.md
-  rubric.zh-CN.md
-  forward-test-report.md
-  forward-test-report.zh-CN.md
-README.md
-README.en.md
+  prompt-refiner-cases.jsonl          Test cases
+  rubric.md / rubric.zh-CN.md         Evaluation rubric
+  forward-test-report.md / .zh-CN.md  Forward test report
+README.md / README.en.md
 LICENSE
 ```
 
-The repository contains one canonical skill. Files under `agents/` are host-facing metadata for that same skill, not separate model or client versions.
+This repository maintains a single canonical version. The file under `agents/` is host interface metadata for the same skill, not a separate version per model or client.
 
-## Reproduce The Evaluation
+## Evaluation
 
-The manual suite covers clear rewrites, vague product requests, current information, ambiguous code changes, scoped implementation, destructive operations, high-stakes judgment, hidden-thinking requests, technical conflicts, output overrides, structure preservation, and authorization boundaries.
+The skill content at commit `ead59ad` was compared against the earlier `11010eb` using the repository's 14-point rubric on six representative cases:
 
-To evaluate a revision:
+| Evaluation | Old | Then-current | Result |
+| --- | ---: | ---: | --- |
+| Independent testing | `71/84` | `78/84` | `+7` |
+| Anonymous comparison | `60/84` | `84/84` | Reviewers chose the new version |
 
-1. Load the skill under test in a fresh agent context.
-2. Run each request in [evals/prompt-refiner-cases.jsonl](evals/prompt-refiner-cases.jsonl) without revealing its expectations.
-3. Score the result with [evals/rubric.md](evals/rubric.md).
-4. Record the exact revision, method, limitations, and results in the forward-test report.
-
-The rubric rewards goal clarity, success criteria, important boundaries, stop rules, clarification discipline, path autonomy, and information density. It does not reward verbosity or hidden reasoning. Read the [full report](evals/forward-test-report.md) before interpreting aggregate scores.
+These scores refer to those historical commits and are directional evidence, not a universal benchmark. See the [full forward test report](evals/forward-test-report.md) for per-case scores, methods, and limitations. The rubric and cases for reproducing the evaluation live in `evals/`.
 
 ## Design Principles
 
 - Task contracts over exhaustive specifications.
-- Observable success over vague quality claims.
-- Safe defaults over avoidable questions.
+- Observable success criteria over vague quality demands.
+- Safe defaults over unnecessary questions.
 - Important boundaries over prescribed implementation paths.
 - Fresh evidence over stale assumptions.
 - Visible decisions and verification over hidden chain-of-thought.
-- Stop when the contract is sufficient.
+- Stop expanding the moment the contract is sufficient.
+
+## References
+
+- [OpenAI GPT-5.6 prompt guidance](https://developers.openai.com/api/docs/guides/prompt-guidance-gpt-5p6): recommends leaner prompts that define autonomy and approval boundaries instead of dictating every step.
+- [OpenAI wrote a dedicated prompting guide for GPT-5.6](https://www.bilibili.com/video/BV13F3g6VExA/) (Chinese): public walkthrough published `2026-07-25` by 清华姜学长.
+
+The five-field task contract is this repository's own synthesis, not an official OpenAI template, and does not imply endorsement by OpenAI or the video author.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).
