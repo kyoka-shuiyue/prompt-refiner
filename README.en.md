@@ -47,6 +47,34 @@ The smarter the model, the less your prompt needs to dictate each step — and t
 
 These four, plus "which open choices are worth asking about," are the five fields of the task contract. Tools, modules, workflows, and implementation steps are supporting details — include them only when they change the contract itself or when explicitly requested.
 
+## Why Short, Clear Prompts Work Better
+
+Today's models are not short on context window — they are short on attention. That claim has real evidence behind it:
+
+- The Stanford/UNC paper [Lost in the Middle](https://arxiv.org/abs/2307.03172) (TACL 2024) measured that model performance drops noticeably when relevant information sits in the middle of a long context, and degrades further as context grows.
+- [Anthropic's engineering blog](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) recommends striving for "the minimal set of information that fully outlines your expected behavior" instead of stuffing prompts with rule lists and edge cases.
+
+In other words: the smarter the model, the less it needs you to dictate every step — what it needs is short, explicit, verifiable instructions.
+
+The same request, two outcomes.
+
+Thrown at the model as-is:
+
+> Optimize my website's loading speed.
+
+The model has to guess: which page? How fast is fast? May it touch code? Dependencies? A wrong guess means a wasted round.
+
+After `prompt-refiner`:
+
+```text
+Goal: cut homepage first-load time from 4.2s to under 2s.
+Success criteria: Lighthouse performance ≥ 85; LCP < 2.5s; all regression tests pass.
+Boundaries: front-end assets and build only; no backend API changes; no framework swap.
+Stop rules: produce a baseline report first; stop once image compression plus code splitting hit the target — no over-optimization.
+```
+
+Barely more words, but nothing left to guess — the model's attention lands on verifiable goals instead of hunting for the point inside paragraphs of process description.
+
 ## Installation
 
 ### Option 1: One-Command Global Install for Codex
@@ -199,6 +227,8 @@ These scores refer to those historical commits and are directional evidence, not
 
 ## References
 
+- [Lost in the Middle: How Language Models Use Long Contexts](https://arxiv.org/abs/2307.03172): Stanford/UNC paper (TACL 2024) measuring how performance drops when key information sits mid-context.
+- [Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents): Anthropic engineering post recommending the minimal sufficient set of information in prompts.
 - [OpenAI GPT-5.6 prompt guidance](https://developers.openai.com/api/docs/guides/prompt-guidance-gpt-5p6): recommends leaner prompts that define autonomy and approval boundaries instead of dictating every step.
 - [OpenAI wrote a dedicated prompting guide for GPT-5.6](https://www.bilibili.com/video/BV13F3g6VExA/) (Chinese): public walkthrough published `2026-07-25` by 清华姜学长.
 

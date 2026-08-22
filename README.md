@@ -43,6 +43,34 @@
 
 这四件事加上"哪些未决选择值得问一句"，就是任务合同的五个字段。工具、模块、工作流、实现步骤都是辅助信息——只有它们会改变合同本身，或你明确要求时才写进去。
 
+## 为什么短而清晰的 Prompt 更有效
+
+现在的模型不缺上下文窗口，缺的是注意力。这个判断有真实依据：
+
+- Stanford 与 UNC 的论文 [Lost in the Middle](https://arxiv.org/abs/2307.03172)（TACL 2024）实测发现：相关信息埋在长文本中部时，模型表现明显下降，且上下文越长越严重。
+- [Anthropic 工程博客](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)建议 prompt 应追求"完整描述期望行为的最小信息集"，不要把一堆规则和边缘案例塞进去让模型自己猜重点。
+
+换句话说，模型越强，越不需要你替它规定每一步；它需要的是短、明确、可验证的指令。
+
+同一个需求，两种命运。
+
+直接扔给模型：
+
+> 帮我优化一下这个网站的加载速度
+
+模型只能猜：哪个页面？多快算快？能不能改代码？动不动依赖？方向猜错，整轮返工。
+
+经过 `prompt-refiner` 整理后：
+
+```text
+目标：首页首次加载从 4.2s 降到 2s 以内。
+成功标准：Lighthouse 性能分 ≥ 85；LCP < 2.5s；回归测试全过。
+重要边界：只改前端资源与构建；不动后端接口；不换框架。
+停止条件：先出基线测量报告；图片压缩加代码分割达标即停，不做过度优化。
+```
+
+字数没多几个，但模型不用再猜了——注意力全部落在可验证的目标上，而不是在一堆流程描述里找重点。
+
 ## 安装
 
 ### 方式一：一行命令安装到 Codex（全局）
@@ -195,6 +223,8 @@ LICENSE
 
 ## 参考资料
 
+- [Lost in the Middle: How Language Models Use Long Contexts](https://arxiv.org/abs/2307.03172)：Stanford 与 UNC 合作的论文（TACL 2024），实测相关信息位于长上下文中部时模型表现明显下降。
+- [Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)：Anthropic 工程博客，建议 prompt 追求"完整描述期望行为的最小信息集"。
 - [OpenAI GPT-5.6 模型与 Prompt 指南](https://developers.openai.com/api/docs/guides/prompt-guidance-gpt-5p6)：建议使用更精简的 Prompt，集中定义自主权和审批边界，而不是规定每一步。
 - [OpenAI这次给GPT-5.6写了一份专门的提示词](https://www.bilibili.com/video/BV13F3g6VExA/)：清华姜学长发布于 `2026-07-25` 的中文公开解读。
 
