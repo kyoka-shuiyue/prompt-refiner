@@ -1,29 +1,6 @@
 # Refinement Patterns
 
-Load this file only when a task needs handling beyond the core task-contract workflow.
-
-## Output Overrides
-
-### Pure Prompt
-
-When the user says `纯prompt`, `只要prompt`, or requests a copy-ready prompt without commentary:
-
-- return exactly one prompt block;
-- preserve the supplied structure when it is useful;
-- fold safe defaults into the prompt;
-- include only sections that change behavior;
-- omit decision scaffolding unless a missing input makes the prompt unusable.
-
-### No Follow-Up
-
-When the user says `不要问`, `直接继续`, or requests silent self-grilling:
-
-- resolve low-risk ambiguity with sensible defaults;
-- record consequential assumptions only when useful for verification or recovery;
-- continue to the requested deliverable;
-- stop only for missing permission, dangerous expansion, secrets, or truly blocking information.
-
-No-follow-up changes how ambiguity is resolved. It does not authorize new external side effects or unsafe assumptions.
+Load this file only when a task needs handling beyond the core task-contract workflow. Activation, routing, overrides (`纯prompt`, `继续`, `不要问`), and handoff rules live only in `SKILL.md`.
 
 ## Materiality Test
 
@@ -60,19 +37,6 @@ For investing, medical, legal, safety, betting, or other risky use:
 Do not automatically expand a product or engineering request into a full specification. Add users, workflows, modules, stack, state, security, delivery phases, or named resources only when they materially affect the task contract.
 
 For implementation plans, include enough detail to make dependencies, state transitions, failure behavior, privacy or security boundaries, and validation observable. Leave ordinary implementation choices to the executing agent.
-
-## Execution Plan Gate
-
-For genuinely complex, multi-phase direct execution that benefits from recovery state, confirm the task contract before implementation. Ask up to three high-impact questions only when safe defaults could materially change the result. Then write a persistent plan file containing:
-
-- goal and success criteria;
-- important boundaries and confirmed assumptions;
-- scope and non-goals;
-- an execution roadmap at the level needed for recovery;
-- stop, fallback, safety, and rollback rules;
-- verification.
-
-Keep the plan file current across phases so a fresh session can resume from it. Do not turn the plan into a speculative implementation specification. Skip it for clear localized changes, tiny actions, read-only answers, prompt-only work, or explicit no-file instructions.
 
 ## Technical Conflict Handling
 

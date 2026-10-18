@@ -2,238 +2,104 @@
 
 [简体中文](README.md) | [English](README.en.md)
 
-`prompt-refiner` is a model-agnostic AI skill: it turns rough, scattered, or self-contradictory requests into a clear task contract, so the model knows where the destination is and where the guardrails are — while keeping the freedom to choose its own route.
+`prompt-refiner` helps clarify your thinking: identify the intended outcome, resolve ambiguities and conflicts that change the result, and express the necessary goal, boundaries, and completion criteria.
 
-It works in any AI coding assistant or agent that supports the `SKILL.md` skill format (Codex, Claude Code, Cursor, and others). It is not tied to any specific model or client.
+**Current version: 1.3.0. The focus is clarifying existing intent while preserving scope and creative freedom.** Clear tasks proceed directly. Only gaps that materially affect the result warrant an addition or a question. The skill also supports creating, rewriting, critiquing, and comparing prompts.
 
-## A Quick Example
+The package contains `SKILL.md` and supporting files for compatible skill hosts. Discovery and invocation depend on the host; the core instructions do not bind to a particular model.
 
-You tell the AI:
+## What Changed
 
-> Build me a tool that searches my local files. Make it fast.
+- **Narrower activation:** length, complexity, an open solution space, or missing acceptance criteria no longer trigger refinement by themselves. Clear creative requests proceed directly.
+- **Less process:** removed the skill's mandatory plan-file gate, repeated command explanations, internal mode labels, and recurring phase checks. Planning, implementation, and validation belong to the underlying workflow.
+- **Bounded goal completion:** derive observable completion criteria from the existing purpose without inventing features, modules, business commitments, fixed metrics, or methods.
+- **Explicit exit:** finish refinement once the outcome and necessary boundaries are identifiable and material conflicts are resolved. Missing files, unknown environments, and technical failures alone do not restart intent clarification.
+- **Corrected questions and commands:** offer 2–3 concrete interpretations for material ambiguity. Prefer one compact round, with minimal follow-up if a real conflict remains. “Continue directly” resumes the agreed task; “don't ask / you decide” delegates choices within existing authorization.
 
-What can the AI do with that? Which stack? Is "fast" about startup or search? Does it need a UI? The model has to guess — and if it guesses wrong, you pay for the rework.
+See [CHANGELOG.md](CHANGELOG.md) for release details in Chinese and English.
 
-After `prompt-refiner`, the model receives:
+## When to Use It
 
-```text
-Goal: a CLI knowledge-base tool that indexes local file contents and returns
-matching files and snippets for a keyword query.
-Success criteria: searches a directory of 10k files return within 3 seconds
-for common keywords; supports txt / md / pdf text.
-Boundaries: read-only access to the specified directory; no network; never
-modifies source files.
-Stop rules: ship a working CLI version first; a GUI is a possible follow-up,
-out of scope for now.
-```
+| Situation | Behavior |
+| --- | --- |
+| Disordered language obscures meaning | Rebuild intent from context; correct obvious transcription errors directly |
+| Intent is unclear or contradictory, or interpretations change the deliverable | Inspect available evidence, then offer concrete interpretations |
+| Direction is clear but the actual deliverable cannot be identified | Derive the necessary goal and completion criteria from the existing purpose |
+| Explicit request to create, rewrite, critique, or compare a prompt | Return the prompt or critique; execute its task only if asked |
+| Clear task, simple request, or clear creative brief | Proceed through the underlying workflow |
+| Only a source, file, dataset, or environment detail is missing | Locate or request the smallest necessary input without restarting an intent interview |
 
-Notice the difference: barely more words, but the **goal, the bar, the boundaries, and the scope** are all clear. No guessing on either side.
+For example:
 
-## The Problem It Solves
+> Condense this document to one page, but preserve every paragraph word for word.
 
-Requests to AI usually fail in one of two opposite ways:
+Clarify whether to retain the original and add a one-page summary, or allow edits to the original. Those produce materially different results.
 
-1. **Too little information** — "optimize the performance a bit." The model does not know the baseline, the target, or whether it may change interfaces, so it guesses.
-2. **Too much prescription** — to prevent the model from wandering, you dictate every step. The model could have found a better path, but your process ties its hands.
+By comparison, “Create an event poster with a seaside atmosphere; you decide the rest” provides direction and creative freedom. It does not require questions about colors, fonts, or layout, or authorize inventing event details.
 
-`prompt-refiner` answers with a **smallest sufficient task contract** that avoids both traps: it fills in only the information that materially changes the result and leaves the rest to the model's judgment.
+## What It Retains
 
-The smarter the model, the less your prompt needs to dictate each step — and the more it needs to state four things clearly:
+When refinement is needed, clarify only what affects the result:
 
-- **What** you want (the goal)
-- **What counts as done** (success criteria)
-- **What it must not touch** (important boundaries)
-- **When to stop** (stop rules)
+1. The intended outcome.
+2. What counts as complete.
+3. Important scope, fact, and permission boundaries.
+4. When to finish, ask, retry, or stop.
+5. Which unresolved choices need the user's decision.
 
-These four, plus "which open choices are worth asking about," are the five fields of the task contract. Tools, modules, workflows, and implementation steps are supporting details — include them only when they change the contract itself or when explicitly requested.
+These are checks, not a form to fill on every request. Clear requirements need no rewrite. Leave ordinary implementation choices to the executor, and scale any additions to the task.
 
-## Why Short, Clear Prompts Work Better
+## Installation and Updates
 
-Today's models are not short on context window — they are short on attention. That claim has real evidence behind it:
-
-- The Stanford/UNC paper [Lost in the Middle](https://arxiv.org/abs/2307.03172) (TACL 2024) measured that model performance drops noticeably when relevant information sits in the middle of a long context, and degrades further as context grows.
-- [Anthropic's engineering blog](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) recommends striving for "the minimal set of information that fully outlines your expected behavior" instead of stuffing prompts with rule lists and edge cases.
-
-In other words: the smarter the model, the less it needs you to dictate every step — what it needs is short, explicit, verifiable instructions.
-
-The same request, two outcomes.
-
-Thrown at the model as-is:
-
-> Optimize my website's loading speed.
-
-The model has to guess: which page? How fast is fast? May it touch code? Dependencies? A wrong guess means a wasted round.
-
-After `prompt-refiner`:
-
-```text
-Goal: cut homepage first-load time from 4.2s to under 2s.
-Success criteria: Lighthouse performance ≥ 85; LCP < 2.5s; all regression tests pass.
-Boundaries: front-end assets and build only; no backend API changes; no framework swap.
-Stop rules: produce a baseline report first; stop once image compression plus code splitting hit the target — no over-optimization.
-```
-
-Barely more words, but nothing left to guess — the model's attention lands on verifiable goals instead of hunting for the point inside paragraphs of process description.
-
-## Installation
-
-### Option 1: One-Command Global Install for Codex
+If you use the `skills` CLI:
 
 ```bash
 npx -y skills add kyoka-shuiyue/prompt-refiner --skill prompt-refiner --global --agent codex --yes
 ```
 
-Requires Node.js `22.20.0` or newer. Restart Codex after installation.
-
-### Option 2: Manual Install (Any SKILL.md-Compatible Host)
+Alternatively, obtain the repository manually:
 
 ```bash
 git clone https://github.com/kyoka-shuiyue/prompt-refiner.git
 cd prompt-refiner
 ```
 
-Copy the `prompt-refiner/` directory into your agent's skills directory:
-
-```bash
-# macOS / Linux
-cp -R prompt-refiner /path/to/your-agent/skills/
-```
-
-```powershell
-# Windows PowerShell
-$skillsRoot = "C:\path\to\your-agent\skills"
-Copy-Item -Recurse -Force .\prompt-refiner (Join-Path $skillsRoot "prompt-refiner")
-```
-
-Reload or restart the host if it does not auto-detect skills. The exact skills directory and invocation syntax follow your host's documentation.
-
-To update, run `git pull --ff-only` in this repository and copy the skill directory again.
+Copy the repository's `prompt-refiner/` directory into your host's skills directory. To update, run `git pull --ff-only` and copy that directory again. Reload skills as required by your host. Runtime requirements follow the installer and host documentation.
 
 ## Usage
 
-### Automatic Triggering
-
-Hosts with implicit skill routing load it automatically based on the frontmatter description — just talk normally.
-
-### Explicit Invocation
-
-Refine a rough request:
+Hosts with implicit skill routing may select it from its description. You can also invoke it explicitly:
 
 ```text
-Use $prompt-refiner to refine this request:
-Build a knowledge-base tool that can search local files.
+Use $prompt-refiner to clarify this request. Preserve my scope and address only ambiguities that affect the result:
+[original request]
 ```
 
-### Quick Commands
-
-`prompt-refiner` recognizes a few commands that control output style:
-
-| Command | Effect |
+| Command | Behavior |
 | --- | --- |
-| `纯prompt` / `只要prompt` | Return exactly one copy-ready prompt block, no commentary |
-| `不要问` / `直接继续` | Do not ask; resolve ambiguity with safe defaults and proceed |
+| `纯prompt` / `只要prompt` (prompt only) | Return one copy-ready prompt; request a missing input first if the prompt would otherwise be unusable |
+| `继续` / `直接继续` (continue / continue directly) | Resume the agreed goal and authorization; resolve any new material ambiguity |
+| `不要问` / `你决定` / `自问自答后执行` (don't ask / you decide) | Choose sensible defaults within delegated decisions; do not expand authorization |
 
-For example:
+For execution requests, resume the task after clarification. For prompt-only requests, deliver the prompt and stop. The skill adds no separate refinement approval or mandatory plan file.
 
-```text
-$prompt-refiner 纯prompt：完善这个本地 AI 桌面工具的开发需求。
-```
-
-```text
-$prompt-refiner 不要问，使用安全默认值，在当前仓库完成这个功能并验证结果。
-```
-
-### How It Handles Four Kinds of Requests
-
-| You want | It does |
-| --- | --- |
-| To refine, rewrite, or compare a prompt | Returns one copy-ready refined prompt; does not execute it |
-| The task done | Clarifies key decisions, then executes within the authorized boundary |
-| A read-only question answered | Answers directly; no prompt scaffolding |
-| Something ambiguous | Inspects safely, infers low-risk defaults, and asks at most one bundled round only if needed |
-
-## How It Works
-
-1. **Classify the deliverable**: prompt, direct execution, read-only answer, or clarification.
-2. **Pressure-test internally**: self-grill around the five contract fields, with no fixed question quota, until answers stop changing the contract.
-3. **Default when safe**: low-impact ambiguity is resolved with sensible defaults instead of interrupting you.
-4. **Ask only what matters**: when an answer would change scope, permissions, safety, cost, or acceptance criteria, ask at most one round of 1-3 questions, each with a recommended default.
-5. **Produce the smallest sufficient result**: a copy-ready prompt, a direct answer, or an execution contract.
-6. **Stress-test before delivery**: is the completion bar observable, are permissions clear, do any rules contradict, is there unnecessary prescription?
-
-Only genuinely complex, multi-phase execution that benefits from recovery state gets a persistent plan file. Clear localized changes, read-only answers, and prompt-only work stay lightweight.
-
-## FAQ
-
-**Q: Will it make my prompt longer?**
-
-No. Its core principle is "smallest sufficient" — keep only what affects the goal, the bar, the boundaries, and the stop rules; drop filler process and template boilerplate. Most refined prompts are shorter and denser than the original.
-
-**Q: Will it interrogate me with a barrage of questions?**
-
-No. It asks you at most one round of 1-3 questions, and only questions whose answers materially change the task. Everything else is resolved internally with safe defaults.
-
-**Q: Which models or tools does it support?**
-
-Any host that supports the `SKILL.md` skill format, including Codex, Claude Code, and Cursor. The skill content is model-agnostic: it depends on no vendor-specific API, tool combination, or workflow, and it does not maintain separate versions per model.
-
-**Q: I use voice input and my messages come out garbled. Can it handle that?**
-
-Yes. Transcription errors, homophones, scrambled word order, and swallowed verbs are handled by rebuilding the intended meaning first, instead of executing the literal ambiguity. Claims like "I changed X to Y" are verified before being treated as fact.
-
-**Q: How is this different from "ask the AI more questions"?**
-
-The difference is **filtered questions**. An unrestricted model will ask about trivial details; this skill resolves everything it safely can with defaults first, and leaves for you only the decisions where a wrong choice would change the outcome.
-
-## Repository Structure
+## Repository and Validation
 
 ```text
 prompt-refiner/
-  SKILL.md                  The single canonical skill (model-agnostic)
-  agents/
-    openai.yaml             Optional interface metadata for compatible hosts
-  references/
-    patterns.md             Special-case handling patterns (loaded on demand)
-evals/
-  prompt-refiner-cases.jsonl          Test cases
-  rubric.md / rubric.zh-CN.md         Evaluation rubric
-  forward-test-report.md / .zh-CN.md  Forward test report
+  SKILL.md
+  agents/openai.yaml
+  references/patterns.md
+evals/                     Historical cases, rubrics, and reports
 README.md / README.en.md
+CHANGELOG.md
 LICENSE
 ```
 
-This repository maintains a single canonical version. The file under `agents/` is host interface metadata for the same skill, not a separate version per model or client.
+`agents/openai.yaml` supplies interface metadata for the same skill, not a separate model version.
 
-## Evaluation
-
-The skill content at commit `ead59ad` was compared against the earlier `11010eb` using the repository's 14-point rubric on six representative cases:
-
-| Evaluation | Old | Then-current | Result |
-| --- | ---: | ---: | --- |
-| Independent testing | `71/84` | `78/84` | `+7` |
-| Anonymous comparison | `60/84` | `84/84` | Reviewers chose the new version |
-
-These scores refer to those historical commits and are directional evidence, not a universal benchmark. See the [full forward test report](evals/forward-test-report.md) for per-case scores, methods, and limitations. The rubric and cases for reproducing the evaluation live in `evals/`.
-
-## Design Principles
-
-- Task contracts over exhaustive specifications.
-- Observable success criteria over vague quality demands.
-- Safe defaults over unnecessary questions.
-- Important boundaries over prescribed implementation paths.
-- Fresh evidence over stale assumptions.
-- Visible decisions and verification over hidden chain-of-thought.
-- Stop expanding the moment the contract is sufficient.
-
-## References
-
-- [Lost in the Middle: How Language Models Use Long Contexts](https://arxiv.org/abs/2307.03172): Stanford/UNC paper (TACL 2024) measuring how performance drops when key information sits mid-context.
-- [Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents): Anthropic engineering post recommending the minimal sufficient set of information in prompts.
-- [OpenAI GPT-5.6 prompt guidance](https://developers.openai.com/api/docs/guides/prompt-guidance-gpt-5p6): recommends leaner prompts that define autonomy and approval boundaries instead of dictating every step.
-- [OpenAI wrote a dedicated prompting guide for GPT-5.6](https://www.bilibili.com/video/BV13F3g6VExA/) (Chinese): public walkthrough published `2026-07-25` by 清华姜学长.
-
-The five-field task contract is this repository's own synthesis, not an official OpenAI template, and does not imply endorsement by OpenAI or the video author.
+The six-case comparison in `evals/` covers historical commits `ead59ad` and `11010eb`; see the [historical report](evals/forward-test-report.md). **Those scores are not behavioral results for 1.3.0.** This release synchronizes the local skill files and checks structure and references. A new comparative behavior evaluation has not been run, and no model-specific efficiency gain is claimed.
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+MIT; see [LICENSE](LICENSE).

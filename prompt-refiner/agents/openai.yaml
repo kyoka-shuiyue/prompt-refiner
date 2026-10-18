@@ -1,4 +1,4 @@
 interface:
   display_name: "Prompt Refiner"
-  short_description: "Clarifies task contracts without over-prescribing paths"
-  default_prompt: "Use $prompt-refiner to clarify this request's goal, success criteria, boundaries, stop rules, and material questions."
+  short_description: "Resolves unclear intent and defines concrete delivery goals"
+  default_prompt: "Use $prompt-refiner to clarify unclear or conflicting intent with concrete options and define a high-standard, explicit delivery goal when needed, preserving the user's scope and creative freedom."
