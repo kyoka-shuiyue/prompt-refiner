@@ -1,6 +1,6 @@
 # Refinement Patterns
 
-Load this file only when a task needs handling beyond the core task-contract workflow. Activation, routing, overrides (`纯prompt`, `继续`, `不要问`), and handoff rules live only in `SKILL.md`.
+Load this file only when a task needs handling beyond the core task-contract workflow. Activation, routing, overrides (`纯prompt`, `继续`, `不要问`), final-version, handoff-brief, and exit rules live only in `SKILL.md`.
 
 ## Materiality Test
 
@@ -12,6 +12,21 @@ Before adding a question, section, example, tool rule, workflow, module, path, o
 4. Does it define when to finish, retry, fall back, ask, or stop?
 
 If every answer is no, omit it and let the executing model choose the path.
+
+## Creative Refinement
+
+For an explicitly requested refinement of clear creative intent, preserve the user's idea, audience, intended effect, and explicit constraints. Add only requirements whose absence is likely to cause a material failure in this deliverable:
+
+- Derive observable quality criteria from the existing goal; do not promote a suggested feature into a user requirement.
+- When goals genuinely compete, state a brief priority grounded in the request. An exhibition may prioritize atmosphere and discovery; a utility may prioritize clarity and task completion.
+- Leave composition, colors, typography, imagery, structure, motion, tools, and implementation to the executor unless the user constrained them. Describe what an interaction should accomplish before specifying controls.
+- Tie the few consequential criteria to a proportionate check of the actual artifact. Let the executor choose how to check; never claim verification that did not occur.
+
+Prefer the original brief plus a compact addition. Remove generic praise, repeated adjectives, decorative structure, and unnecessary implementation instructions.
+
+## Known-Product Inspiration
+
+When the user references an existing product, use it as a functional or stylistic reference. Do not copy protected assets, brand marks, exact copy, or exact UI.
 
 ## Current Information
 
